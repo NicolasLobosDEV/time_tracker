@@ -1,0 +1,238 @@
+// lib/screens/invoices/invoice_edit_screen.dart
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:time_tracker/database/database.dart';
+import 'package:drift/drift.dart' as drift;
+import 'package:time_tracker/models/line_item.dart';
+import 'package:time_tracker/utils/pdf_generator.dart';
+
+class InvoiceEditScreen extends StatefulWidget {
+  final Invoice? invoice;
+  const InvoiceEditScreen({super.key, this.invoice});
+
+  @override
+  State<InvoiceEditScreen> createState() => _InvoiceEditScreenState();
+}
+
+class _InvoiceEditScreenState extends State<InvoiceEditScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _invoiceIdController = TextEditingController();
+  final _notesController = TextEditingController();
+
+  Client? _selectedClient;
+  DateTime _issueDate = DateTime.now();
+  DateTime _dueDate = DateTime.now().add(const Duration(days: 30));
+  List<LineItem> _lineItems = [];
+  String _status = 'Draft';
+
+  bool get _isEditing => widget.invoice != null;
+
+  @override
+  void initState() {
+    super.initState();
+    if (_isEditing) {
+      final inv = widget.invoice!;
+      _invoiceIdController.text = inv.invoiceIdString;
+      _notesController.text = inv.notes ?? '';
+      _issueDate = inv.issueDate;
+      _dueDate = inv.dueDate;
+      _status = inv.status;
+      if (inv.lineItemsJson != null) {
+        _lineItems = lineItemsFromJson(inv.lineItemsJson!);
+      }
+      _loadClient();
+    } else {
+      _invoiceIdController.text = 'INV-${DateTime.now().year}-${DateTime.now().month.toString().padLeft(2, '0')}-001';
+    }
+  }
+
+  Future<void> _loadClient() async {
+    if (!_isEditing) return;
+    final db = Provider.of<AppDatabase>(context, listen: false);
+    final client = await (db.select(db.clients)..where((c) => c.id.equals(widget.invoice!.clientId))).getSingle();
+    setState(() {
+      _selectedClient = client;
+    });
+  }
+
+  Future<void> _saveInvoice() async {
+    if (!_formKey.currentState!.validate() || _selectedClient == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select a client and fill all required fields.')));
+      return;
+    }
+    
+    final db = Provider.of<AppDatabase>(context, listen: false);
+    final total = _lineItems.fold<double>(0, (sum, item) => sum + item.total);
+
+    // FIX 1: Removed 'drift.' prefix from InvoicesCompanion
+    final companion = InvoicesCompanion(
+      id: _isEditing ? drift.Value(widget.invoice!.id) : const drift.Value.absent(),
+      invoiceIdString: drift.Value(_invoiceIdController.text),
+      clientId: drift.Value(_selectedClient!.id),
+      issueDate: drift.Value(_issueDate),
+      dueDate: drift.Value(_dueDate),
+      notes: drift.Value(_notesController.text),
+      status: drift.Value(_status),
+      totalAmount: drift.Value(total),
+      lineItemsJson: drift.Value(lineItemsToJson(_lineItems)),
+    );
+
+    if (_isEditing) {
+      await db.update(db.invoices).replace(companion);
+    } else {
+      await db.into(db.invoices).insert(companion);
+    }
+    if (mounted) Navigator.of(context).pop();
+  }
+
+  Future<void> _fetchTimeEntries() async {
+    if (_selectedClient == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select a client first.')));
+      return;
+    }
+    
+    final dateRange = await showDateRangePicker(context: context, firstDate: DateTime(2020), lastDate: DateTime.now());
+    if (dateRange == null) return;
+    
+    final db = Provider.of<AppDatabase>(context, listen: false);
+    
+    final clientProjects = await (db.select(db.projects)..where((p) => p.clientId.equals(_selectedClient!.id))).get();
+    if (clientProjects.isEmpty) return;
+    
+    final query = db.select(db.timeEntries).join([
+      drift.innerJoin(db.projects, db.projects.id.equalsExp(db.timeEntries.projectId))
+    ])
+    ..where(db.projects.clientId.equals(_selectedClient!.id))
+    ..where(db.timeEntries.isBilled.equals(false))
+    ..where(db.timeEntries.startTime.isBetweenValues(dateRange.start, dateRange.end.add(const Duration(days: 1))));
+
+    final results = await query.get();
+
+    if (results.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No unbilled time entries found for this period.')));
+      return;
+    }
+    
+    final Map<int, LineItem> projectSummaries = {};
+    final List<int> entryIdsToUpdate = [];
+
+    for (final row in results) {
+      final entry = row.readTable(db.timeEntries);
+      final project = row.readTable(db.projects);
+      if (entry.endTime == null) continue;
+      final duration = entry.endTime!.difference(entry.startTime);
+      final hours = duration.inMinutes / 60.0;
+      
+      entryIdsToUpdate.add(entry.id);
+
+      projectSummaries.update(
+        project.id,
+        (existing) => LineItem(description: existing.description, quantity: existing.quantity + hours, unitPrice: existing.unitPrice),
+        ifAbsent: () => LineItem(description: 'Work on project: ${project.name}', quantity: hours, unitPrice: project.hourlyRate),
+      );
+    }
+
+    // FIX 2: Removed 'drift.' prefix from TimeEntriesCompanion
+    await (db.update(db.timeEntries)..where((t) => t.id.isIn(entryIdsToUpdate))).write(const TimeEntriesCompanion(isBilled: drift.Value(true)));
+
+    setState(() {
+      _lineItems.addAll(projectSummaries.values);
+    });
+  }
+  
+  Future<void> _previewPdf() async {
+    if (_selectedClient == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select a client first.')));
+      return;
+    }
+
+    final db = Provider.of<AppDatabase>(context, listen: false);
+    final settings = await (db.select(db.companySettings)..where((s) => s.id.equals(1))).getSingle();
+    final total = _lineItems.fold<double>(0, (sum, item) => sum + item.total);
+
+    final invoiceData = Invoice(
+      id: widget.invoice?.id ?? 0,
+      invoiceIdString: _invoiceIdController.text,
+      clientId: _selectedClient!.id,
+      issueDate: _issueDate,
+      dueDate: _dueDate,
+      totalAmount: total,
+      notes: _notesController.text,
+      status: _status,
+      lineItemsJson: lineItemsToJson(_lineItems)
+    );
+
+    await generateAndShowInvoice(
+      invoice: invoiceData,
+      client: _selectedClient!,
+      settings: settings,
+      items: _lineItems,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final db = Provider.of<AppDatabase>(context, listen: false);
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(_isEditing ? 'Edit Invoice' : 'New Invoice'),
+        actions: [
+          IconButton(tooltip: 'Preview PDF', icon: const Icon(Icons.picture_as_pdf), onPressed: _previewPdf),
+          IconButton(tooltip: 'Save Invoice', icon: const Icon(Icons.save), onPressed: _saveInvoice),
+        ],
+      ),
+      body: Form(
+        key: _formKey,
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            FutureBuilder<List<Client>>(
+              future: db.select(db.clients).get(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+                return DropdownButtonFormField<Client>(
+                  value: _selectedClient,
+                  decoration: const InputDecoration(labelText: 'Client'),
+                  items: snapshot.data!.map((c) => DropdownMenuItem(value: c, child: Text(c.name))).toList(),
+                  onChanged: (c) => setState(() => _selectedClient = c),
+                  validator: (c) => c == null ? 'Please select a client' : null,
+                );
+              },
+            ),
+            TextFormField(controller: _invoiceIdController, decoration: const InputDecoration(labelText: 'Invoice ID')),
+            
+            const Divider(height: 40),
+            Text('Line Items', style: Theme.of(context).textTheme.titleLarge),
+            
+            if (_lineItems.isEmpty)
+              const Padding(padding: EdgeInsets.symmetric(vertical: 24), child: Center(child: Text('No items added yet.')))
+            else
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _lineItems.length,
+                itemBuilder: (context, index) {
+                  final item = _lineItems[index];
+                  return ListTile(
+                    title: Text(item.description),
+                    subtitle: Text('${item.quantity.toStringAsFixed(2)} hrs @ \$${item.unitPrice.toStringAsFixed(2)}/hr'),
+                    trailing: Text('\$${item.total.toStringAsFixed(2)}'),
+                  );
+                },
+              ),
+            
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                OutlinedButton.icon(icon: const Icon(Icons.add), label: const Text('Add Manual Item'), onPressed: () { /* TODO */ }),
+                const SizedBox(width: 10),
+                ElevatedButton.icon(icon: const Icon(Icons.refresh), label: const Text('Fetch Time Entries'), onPressed: _fetchTimeEntries),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
