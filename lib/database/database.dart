@@ -44,8 +44,9 @@ class Expenses extends Table {
   TextColumn get category => text()();
   RealColumn get amount => real()();
   DateTimeColumn get date => dateTime()();
-    RealColumn get distance => real().nullable()();
+  RealColumn get distance => real().nullable()();
   RealColumn get costPerUnit => real().nullable()();
+  BoolColumn get isBilled => boolean().withDefault(const Constant(false))();
 }
 
 class Invoices extends Table {

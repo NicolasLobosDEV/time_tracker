@@ -38,21 +38,31 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
   Future<Map<String, dynamic>> _generateReportData(TimePeriod period) async {
     final db = Provider.of<AppDatabase>(context, listen: false);
-    final settings = await (db.select(db.companySettings)..where((s) => s.id.equals(1))).getSingleOrNull();
+    final settings = await (db.select(
+      db.companySettings,
+    )..where((s) => s.id.equals(1))).getSingleOrNull();
     // (Date calculation, query, and data processing remain the same)
     final now = DateTime.now();
     DateTime startDate;
     DateTime endDate;
-    
+
     switch (period) {
       case TimePeriod.currentWeek:
         final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
-        startDate = DateTime(startOfWeek.year, startOfWeek.month, startOfWeek.day);
+        startDate = DateTime(
+          startOfWeek.year,
+          startOfWeek.month,
+          startOfWeek.day,
+        );
         endDate = startDate.add(const Duration(days: 7));
         break;
       case TimePeriod.pastWeek:
         final startOfLastWeek = now.subtract(Duration(days: now.weekday + 6));
-        startDate = DateTime(startOfLastWeek.year, startOfLastWeek.month, startOfLastWeek.day);
+        startDate = DateTime(
+          startOfLastWeek.year,
+          startOfLastWeek.month,
+          startOfLastWeek.day,
+        );
         endDate = startDate.add(const Duration(days: 7));
         break;
       case TimePeriod.pastMonth:
@@ -66,22 +76,29 @@ class _ReportsScreenState extends State<ReportsScreen> {
         break;
       case TimePeriod.custom:
         startDate = _customStartDate ?? DateTime(now.year, now.month, now.day);
-        endDate = _customEndDate ?? DateTime(now.year, now.month, now.day, 23, 59, 59);
+        endDate =
+            _customEndDate ??
+            DateTime(now.year, now.month, now.day, 23, 59, 59);
         break;
     }
-    
-    final query = db.select(db.timeEntries).join([
-      drift.innerJoin(db.projects, db.projects.id.equalsExp(db.timeEntries.projectId))
-    ])
-    ..where(db.timeEntries.startTime.isBetweenValues(startDate, endDate))
-    ..where(db.timeEntries.endTime.isNotNull());
+
+    final query =
+        db.select(db.timeEntries).join([
+            drift.innerJoin(
+              db.projects,
+              db.projects.id.equalsExp(db.timeEntries.projectId),
+            ),
+          ])
+          ..where(db.timeEntries.startTime.isBetweenValues(startDate, endDate))
+          ..where(db.timeEntries.endTime.isNotNull());
     final results = await query.get();
 
     Duration totalDuration = Duration.zero;
     double totalRevenue = 0;
     Map<int, double> chartData;
-    bool isWeekly = period == TimePeriod.currentWeek || period == TimePeriod.pastWeek;
-    
+    bool isWeekly =
+        period == TimePeriod.currentWeek || period == TimePeriod.pastWeek;
+
     if (isWeekly) {
       chartData = {1: 0.0, 2: 0.0, 3: 0.0, 4: 0.0, 5: 0.0, 6: 0.0, 7: 0.0};
     } else {
@@ -93,17 +110,17 @@ class _ReportsScreenState extends State<ReportsScreen> {
       final project = row.readTable(db.projects);
       final duration = entry.endTime!.difference(entry.startTime);
       final hours = duration.inMinutes / 60.0;
-      
+
       totalDuration += duration;
       totalRevenue += hours * project.hourlyRate;
-      
+
       int key = isWeekly ? entry.startTime.weekday : entry.startTime.month;
-      
+
       if (chartData.containsKey(key)) {
         chartData.update(key, (value) => value + hours);
       }
     }
-    
+
     return {
       'totalDuration': totalDuration,
       'totalRevenue': totalRevenue,
@@ -116,7 +133,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
       'yAxisMax': settings?.reportsYAxisMax ?? 12.0,
     };
   }
-  
+
   // (selectCustomDateRange and getPeriodDisplayName functions remain the same)
   Future<void> _selectCustomDateRange() async {
     final picked = await showDateRangePicker(
@@ -132,7 +149,14 @@ class _ReportsScreenState extends State<ReportsScreen> {
     if (picked != null) {
       setState(() {
         _customStartDate = picked.start;
-        _customEndDate = DateTime(picked.end.year, picked.end.month, picked.end.day, 23, 59, 59);
+        _customEndDate = DateTime(
+          picked.end.year,
+          picked.end.month,
+          picked.end.day,
+          23,
+          59,
+          59,
+        );
         _selectedPeriod = TimePeriod.custom;
         _reportDataFuture = _generateReportData(TimePeriod.custom);
       });
@@ -141,11 +165,16 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
   String _getPeriodDisplayName(TimePeriod period) {
     switch (period) {
-      case TimePeriod.currentWeek: return 'This Week';
-      case TimePeriod.pastWeek: return 'Last Week';
-      case TimePeriod.pastMonth: return 'Last Month';
-      case TimePeriod.pastYear: return 'Last Year';
-      case TimePeriod.custom: return 'Custom...';
+      case TimePeriod.currentWeek:
+        return 'This Week';
+      case TimePeriod.pastWeek:
+        return 'Last Week';
+      case TimePeriod.pastMonth:
+        return 'Last Month';
+      case TimePeriod.pastYear:
+        return 'Last Year';
+      case TimePeriod.custom:
+        return 'Custom...';
     }
   }
 
@@ -164,7 +193,10 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 value: _selectedPeriod,
                 isExpanded: true,
                 items: TimePeriod.values.map((period) {
-                  return DropdownMenuItem(value: period, child: Text(_getPeriodDisplayName(period)));
+                  return DropdownMenuItem(
+                    value: period,
+                    child: Text(_getPeriodDisplayName(period)),
+                  );
                 }).toList(),
                 onChanged: (newValue) {
                   if (newValue == null) return;
@@ -185,13 +217,22 @@ class _ReportsScreenState extends State<ReportsScreen> {
               future: _reportDataFuture,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Expanded(child: Center(child: CircularProgressIndicator()));
+                  return const Expanded(
+                    child: Center(child: CircularProgressIndicator()),
+                  );
                 }
                 if (snapshot.hasError) {
-                  return Expanded(child: Center(child: Text('Error: ${snapshot.error}')));
+                  return Expanded(
+                    child: Center(child: Text('Error: ${snapshot.error}')),
+                  );
                 }
-                if (!snapshot.hasData || snapshot.data!['totalDuration'] == Duration.zero) {
-                   return const Expanded(child: Center(child: Text('No hours found for this period.')));
+                if (!snapshot.hasData ||
+                    snapshot.data!['totalDuration'] == Duration.zero) {
+                  return const Expanded(
+                    child: Center(
+                      child: Text('No hours found for this period.'),
+                    ),
+                  );
                 }
 
                 final data = snapshot.data!;
@@ -208,45 +249,79 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 return Expanded(
                   child: Column(
                     children: [
-                      Text('Hours Tracked (${DateFormat.yMd().format(startDate)} - ${DateFormat.yMd().format(endDate)})', style: Theme.of(context).textTheme.titleMedium),
+                      Text(
+                        'Hours Tracked (${DateFormat.yMd().format(startDate)} - ${DateFormat.yMd().format(endDate)})',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
                       const SizedBox(height: 16),
-                      
+
                       SizedBox(
                         height: 200,
                         // CHANGE 3: Pass the value to the chart builder
                         child: BarChart(_buildBarChart(chartData, yAxisMax)),
                       ),
                       const SizedBox(height: 32),
-                      
+
                       // (Cards remain the same)
-                      if ((_selectedPeriod == TimePeriod.currentWeek || _selectedPeriod == TimePeriod.pastWeek) && weeklyGoal != null && weeklyGoal > 0)
+                      if ((_selectedPeriod == TimePeriod.currentWeek ||
+                              _selectedPeriod == TimePeriod.pastWeek) &&
+                          weeklyGoal != null &&
+                          weeklyGoal > 0)
                         Card(
                           child: ListTile(
-                            leading: const Icon(Icons.flag, color: Colors.amberAccent),
+                            leading: const Icon(
+                              Icons.flag,
+                              color: Colors.amberAccent,
+                            ),
                             title: const Text('Weekly Goal Progress'),
-                            trailing: Text('${_formatDuration(totalDuration)} / ${weeklyGoal}h 0m', style: Theme.of(context).textTheme.titleLarge),
+                            trailing: Text(
+                              '${_formatDuration(totalDuration)} / ${weeklyGoal}h 0m',
+                              style: Theme.of(context).textTheme.titleLarge,
+                            ),
                           ),
                         ),
-                      if (_selectedPeriod == TimePeriod.pastMonth && monthlyGoal != null && monthlyGoal > 0)
+                      if (_selectedPeriod == TimePeriod.pastMonth &&
+                          monthlyGoal != null &&
+                          monthlyGoal > 0)
                         Card(
-                           child: ListTile(
-                            leading: const Icon(Icons.flag, color: Colors.amberAccent),
+                          child: ListTile(
+                            leading: const Icon(
+                              Icons.flag,
+                              color: Colors.amberAccent,
+                            ),
                             title: const Text('Monthly Goal Progress'),
-                            trailing: Text('${_formatDuration(totalDuration)} / ${monthlyGoal}h 0m', style: Theme.of(context).textTheme.titleLarge),
+                            trailing: Text(
+                              '${_formatDuration(totalDuration)} / ${monthlyGoal}h 0m',
+                              style: Theme.of(context).textTheme.titleLarge,
+                            ),
                           ),
                         ),
                       Card(
                         child: ListTile(
-                          leading: const Icon(Icons.timer, color: Colors.tealAccent),
+                          leading: const Icon(
+                            Icons.timer,
+                            color: Colors.tealAccent,
+                          ),
                           title: const Text('Total Time Tracked'),
-                          trailing: Text(_formatDuration(totalDuration), style: Theme.of(context).textTheme.titleLarge),
+                          trailing: Text(
+                            _formatDuration(totalDuration),
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
                         ),
                       ),
                       Card(
                         child: ListTile(
-                          leading: const Icon(Icons.attach_money, color: Colors.greenAccent),
+                          leading: const Icon(
+                            Icons.attach_money,
+                            color: Colors.greenAccent,
+                          ),
                           title: const Text('Total Revenue'),
-                          trailing: Text(NumberFormat.simpleCurrency(locale: 'en_US').format(totalRevenue), style: Theme.of(context).textTheme.titleLarge),
+                          trailing: Text(
+                            NumberFormat.simpleCurrency(
+                              locale: 'en_US',
+                            ).format(totalRevenue),
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
                         ),
                       ),
                     ],
@@ -262,8 +337,10 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
   // CHANGE 4: Update the function signature and use the dynamic value
   BarChartData _buildBarChart(Map<int, double> data, double yAxisMax) {
-    bool isWeekly = _selectedPeriod == TimePeriod.currentWeek || _selectedPeriod == TimePeriod.pastWeek;
-    
+    bool isWeekly =
+        _selectedPeriod == TimePeriod.currentWeek ||
+        _selectedPeriod == TimePeriod.pastWeek;
+
     return BarChartData(
       maxY: yAxisMax,
       barGroups: data.entries.map((entry) {
@@ -274,20 +351,31 @@ class _ReportsScreenState extends State<ReportsScreen> {
               toY: entry.value,
               color: Theme.of(context).primaryColor,
               width: 16,
-              borderRadius: const BorderRadius.only(topLeft: Radius.circular(4), topRight: Radius.circular(4)),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(4),
+                topRight: Radius.circular(4),
+              ),
             ),
           ],
         );
       }).toList(),
       titlesData: FlTitlesData(
         topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-        rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        rightTitles: const AxisTitles(
+          sideTitles: SideTitles(showTitles: false),
+        ),
         leftTitles: AxisTitles(
           sideTitles: SideTitles(
             showTitles: true,
             reservedSize: 30,
-            getTitlesWidget: (value, meta) => Text('${value.toInt()}h', style: const TextStyle(fontSize: 10)),
-            interval: yAxisMax > 0 ? yAxisMax / 4 : 1, // Use the dynamic value for intervals
+            getTitlesWidget: (value, meta) {
+              // Correct way to return the title widget
+              return Text(
+                '${value.toInt()}h',
+                style: const TextStyle(fontSize: 10),
+              );
+            },
+            interval: yAxisMax > 0 ? yAxisMax / 4 : 1,
           ),
         ),
         bottomTitles: AxisTitles(
@@ -298,19 +386,39 @@ class _ReportsScreenState extends State<ReportsScreen> {
               String text;
               if (isWeekly) {
                 switch (value.toInt()) {
-                  case 1: text = 'Mon'; break;
-                  case 2: text = 'Tue'; break;
-                  case 3: text = 'Wed'; break;
-                  case 4: text = 'Thu'; break;
-                  case 5: text = 'Fri'; break;
-                  case 6: text = 'Sat'; break;
-                  case 7: text = 'Sun'; break;
-                  default: text = ''; break;
+                  case 1:
+                    text = 'Mon';
+                    break;
+                  case 2:
+                    text = 'Tue';
+                    break;
+                  case 3:
+                    text = 'Wed';
+                    break;
+                  case 4:
+                    text = 'Thu';
+                    break;
+                  case 5:
+                    text = 'Fri';
+                    break;
+                  case 6:
+                    text = 'Sat';
+                    break;
+                  case 7:
+                    text = 'Sun';
+                    break;
+                  default:
+                    text = '';
+                    break;
                 }
               } else {
                 text = DateFormat.MMM().format(DateTime(0, value.toInt()));
               }
-              return SideTitleWidget(axisSide: meta.axisSide, space: 4, child: Text(text, style: const TextStyle(fontSize: 10)));
+              // Correct way to return the title widget
+              return Padding(
+                padding: const EdgeInsets.only(top: 4.0),
+                child: Text(text, style: const TextStyle(fontSize: 10)),
+              );
             },
           ),
         ),
@@ -319,14 +427,18 @@ class _ReportsScreenState extends State<ReportsScreen> {
       gridData: FlGridData(
         show: true,
         drawVerticalLine: false,
-        getDrawingHorizontalLine: (value) => const FlLine(color: Colors.white10, strokeWidth: 1),
+        getDrawingHorizontalLine: (value) =>
+            const FlLine(color: Colors.white10, strokeWidth: 1),
       ),
       barTouchData: BarTouchData(
         touchTooltipData: BarTouchTooltipData(
           getTooltipColor: (group) => Colors.blueGrey,
           getTooltipItem: (group, groupIndex, rod, rodIndex) {
             final hours = rod.toY;
-            return BarTooltipItem('${hours.toStringAsFixed(1)} hours', const TextStyle(color: Colors.white, fontWeight: FontWeight.bold));
+            return BarTooltipItem(
+              '${hours.toStringAsFixed(1)} hours',
+              const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            );
           },
         ),
       ),

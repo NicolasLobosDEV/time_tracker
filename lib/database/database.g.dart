@@ -1387,6 +1387,21 @@ class $ExpensesTable extends Expenses with TableInfo<$ExpensesTable, Expense> {
     type: DriftSqlType.double,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _isBilledMeta = const VerificationMeta(
+    'isBilled',
+  );
+  @override
+  late final GeneratedColumn<bool> isBilled = GeneratedColumn<bool>(
+    'is_billed',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_billed" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -1398,6 +1413,7 @@ class $ExpensesTable extends Expenses with TableInfo<$ExpensesTable, Expense> {
     date,
     distance,
     costPerUnit,
+    isBilled,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1476,6 +1492,12 @@ class $ExpensesTable extends Expenses with TableInfo<$ExpensesTable, Expense> {
         ),
       );
     }
+    if (data.containsKey('is_billed')) {
+      context.handle(
+        _isBilledMeta,
+        isBilled.isAcceptableOrUnknown(data['is_billed']!, _isBilledMeta),
+      );
+    }
     return context;
   }
 
@@ -1521,6 +1543,10 @@ class $ExpensesTable extends Expenses with TableInfo<$ExpensesTable, Expense> {
         DriftSqlType.double,
         data['${effectivePrefix}cost_per_unit'],
       ),
+      isBilled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_billed'],
+      )!,
     );
   }
 
@@ -1540,6 +1566,7 @@ class Expense extends DataClass implements Insertable<Expense> {
   final DateTime date;
   final double? distance;
   final double? costPerUnit;
+  final bool isBilled;
   const Expense({
     required this.id,
     required this.description,
@@ -1550,6 +1577,7 @@ class Expense extends DataClass implements Insertable<Expense> {
     required this.date,
     this.distance,
     this.costPerUnit,
+    required this.isBilled,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1571,6 +1599,7 @@ class Expense extends DataClass implements Insertable<Expense> {
     if (!nullToAbsent || costPerUnit != null) {
       map['cost_per_unit'] = Variable<double>(costPerUnit);
     }
+    map['is_billed'] = Variable<bool>(isBilled);
     return map;
   }
 
@@ -1593,6 +1622,7 @@ class Expense extends DataClass implements Insertable<Expense> {
       costPerUnit: costPerUnit == null && nullToAbsent
           ? const Value.absent()
           : Value(costPerUnit),
+      isBilled: Value(isBilled),
     );
   }
 
@@ -1611,6 +1641,7 @@ class Expense extends DataClass implements Insertable<Expense> {
       date: serializer.fromJson<DateTime>(json['date']),
       distance: serializer.fromJson<double?>(json['distance']),
       costPerUnit: serializer.fromJson<double?>(json['costPerUnit']),
+      isBilled: serializer.fromJson<bool>(json['isBilled']),
     );
   }
   @override
@@ -1626,6 +1657,7 @@ class Expense extends DataClass implements Insertable<Expense> {
       'date': serializer.toJson<DateTime>(date),
       'distance': serializer.toJson<double?>(distance),
       'costPerUnit': serializer.toJson<double?>(costPerUnit),
+      'isBilled': serializer.toJson<bool>(isBilled),
     };
   }
 
@@ -1639,6 +1671,7 @@ class Expense extends DataClass implements Insertable<Expense> {
     DateTime? date,
     Value<double?> distance = const Value.absent(),
     Value<double?> costPerUnit = const Value.absent(),
+    bool? isBilled,
   }) => Expense(
     id: id ?? this.id,
     description: description ?? this.description,
@@ -1649,6 +1682,7 @@ class Expense extends DataClass implements Insertable<Expense> {
     date: date ?? this.date,
     distance: distance.present ? distance.value : this.distance,
     costPerUnit: costPerUnit.present ? costPerUnit.value : this.costPerUnit,
+    isBilled: isBilled ?? this.isBilled,
   );
   Expense copyWithCompanion(ExpensesCompanion data) {
     return Expense(
@@ -1665,6 +1699,7 @@ class Expense extends DataClass implements Insertable<Expense> {
       costPerUnit: data.costPerUnit.present
           ? data.costPerUnit.value
           : this.costPerUnit,
+      isBilled: data.isBilled.present ? data.isBilled.value : this.isBilled,
     );
   }
 
@@ -1679,7 +1714,8 @@ class Expense extends DataClass implements Insertable<Expense> {
           ..write('amount: $amount, ')
           ..write('date: $date, ')
           ..write('distance: $distance, ')
-          ..write('costPerUnit: $costPerUnit')
+          ..write('costPerUnit: $costPerUnit, ')
+          ..write('isBilled: $isBilled')
           ..write(')'))
         .toString();
   }
@@ -1695,6 +1731,7 @@ class Expense extends DataClass implements Insertable<Expense> {
     date,
     distance,
     costPerUnit,
+    isBilled,
   );
   @override
   bool operator ==(Object other) =>
@@ -1708,7 +1745,8 @@ class Expense extends DataClass implements Insertable<Expense> {
           other.amount == this.amount &&
           other.date == this.date &&
           other.distance == this.distance &&
-          other.costPerUnit == this.costPerUnit);
+          other.costPerUnit == this.costPerUnit &&
+          other.isBilled == this.isBilled);
 }
 
 class ExpensesCompanion extends UpdateCompanion<Expense> {
@@ -1721,6 +1759,7 @@ class ExpensesCompanion extends UpdateCompanion<Expense> {
   final Value<DateTime> date;
   final Value<double?> distance;
   final Value<double?> costPerUnit;
+  final Value<bool> isBilled;
   const ExpensesCompanion({
     this.id = const Value.absent(),
     this.description = const Value.absent(),
@@ -1731,6 +1770,7 @@ class ExpensesCompanion extends UpdateCompanion<Expense> {
     this.date = const Value.absent(),
     this.distance = const Value.absent(),
     this.costPerUnit = const Value.absent(),
+    this.isBilled = const Value.absent(),
   });
   ExpensesCompanion.insert({
     this.id = const Value.absent(),
@@ -1742,6 +1782,7 @@ class ExpensesCompanion extends UpdateCompanion<Expense> {
     required DateTime date,
     this.distance = const Value.absent(),
     this.costPerUnit = const Value.absent(),
+    this.isBilled = const Value.absent(),
   }) : description = Value(description),
        category = Value(category),
        amount = Value(amount),
@@ -1756,6 +1797,7 @@ class ExpensesCompanion extends UpdateCompanion<Expense> {
     Expression<DateTime>? date,
     Expression<double>? distance,
     Expression<double>? costPerUnit,
+    Expression<bool>? isBilled,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1767,6 +1809,7 @@ class ExpensesCompanion extends UpdateCompanion<Expense> {
       if (date != null) 'date': date,
       if (distance != null) 'distance': distance,
       if (costPerUnit != null) 'cost_per_unit': costPerUnit,
+      if (isBilled != null) 'is_billed': isBilled,
     });
   }
 
@@ -1780,6 +1823,7 @@ class ExpensesCompanion extends UpdateCompanion<Expense> {
     Value<DateTime>? date,
     Value<double?>? distance,
     Value<double?>? costPerUnit,
+    Value<bool>? isBilled,
   }) {
     return ExpensesCompanion(
       id: id ?? this.id,
@@ -1791,6 +1835,7 @@ class ExpensesCompanion extends UpdateCompanion<Expense> {
       date: date ?? this.date,
       distance: distance ?? this.distance,
       costPerUnit: costPerUnit ?? this.costPerUnit,
+      isBilled: isBilled ?? this.isBilled,
     );
   }
 
@@ -1824,6 +1869,9 @@ class ExpensesCompanion extends UpdateCompanion<Expense> {
     if (costPerUnit.present) {
       map['cost_per_unit'] = Variable<double>(costPerUnit.value);
     }
+    if (isBilled.present) {
+      map['is_billed'] = Variable<bool>(isBilled.value);
+    }
     return map;
   }
 
@@ -1838,7 +1886,8 @@ class ExpensesCompanion extends UpdateCompanion<Expense> {
           ..write('amount: $amount, ')
           ..write('date: $date, ')
           ..write('distance: $distance, ')
-          ..write('costPerUnit: $costPerUnit')
+          ..write('costPerUnit: $costPerUnit, ')
+          ..write('isBilled: $isBilled')
           ..write(')'))
         .toString();
   }
@@ -5227,6 +5276,7 @@ typedef $$ExpensesTableCreateCompanionBuilder =
       required DateTime date,
       Value<double?> distance,
       Value<double?> costPerUnit,
+      Value<bool> isBilled,
     });
 typedef $$ExpensesTableUpdateCompanionBuilder =
     ExpensesCompanion Function({
@@ -5239,6 +5289,7 @@ typedef $$ExpensesTableUpdateCompanionBuilder =
       Value<DateTime> date,
       Value<double?> distance,
       Value<double?> costPerUnit,
+      Value<bool> isBilled,
     });
 
 final class $$ExpensesTableReferences
@@ -5321,6 +5372,11 @@ class $$ExpensesTableFilterComposer
 
   ColumnFilters<double> get costPerUnit => $composableBuilder(
     column: $table.costPerUnit,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isBilled => $composableBuilder(
+    column: $table.isBilled,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5415,6 +5471,11 @@ class $$ExpensesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get isBilled => $composableBuilder(
+    column: $table.isBilled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$ProjectsTableOrderingComposer get projectId {
     final $$ProjectsTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -5495,6 +5556,9 @@ class $$ExpensesTableAnnotationComposer
     column: $table.costPerUnit,
     builder: (column) => column,
   );
+
+  GeneratedColumn<bool> get isBilled =>
+      $composableBuilder(column: $table.isBilled, builder: (column) => column);
 
   $$ProjectsTableAnnotationComposer get projectId {
     final $$ProjectsTableAnnotationComposer composer = $composerBuilder(
@@ -5580,6 +5644,7 @@ class $$ExpensesTableTableManager
                 Value<DateTime> date = const Value.absent(),
                 Value<double?> distance = const Value.absent(),
                 Value<double?> costPerUnit = const Value.absent(),
+                Value<bool> isBilled = const Value.absent(),
               }) => ExpensesCompanion(
                 id: id,
                 description: description,
@@ -5590,6 +5655,7 @@ class $$ExpensesTableTableManager
                 date: date,
                 distance: distance,
                 costPerUnit: costPerUnit,
+                isBilled: isBilled,
               ),
           createCompanionCallback:
               ({
@@ -5602,6 +5668,7 @@ class $$ExpensesTableTableManager
                 required DateTime date,
                 Value<double?> distance = const Value.absent(),
                 Value<double?> costPerUnit = const Value.absent(),
+                Value<bool> isBilled = const Value.absent(),
               }) => ExpensesCompanion.insert(
                 id: id,
                 description: description,
@@ -5612,6 +5679,7 @@ class $$ExpensesTableTableManager
                 date: date,
                 distance: distance,
                 costPerUnit: costPerUnit,
+                isBilled: isBilled,
               ),
           withReferenceMapper: (p0) => p0
               .map(
