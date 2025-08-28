@@ -2572,6 +2572,21 @@ class $CompanySettingsTable extends CompanySettings
         type: DriftSqlType.string,
         requiredDuringInsert: false,
       );
+  static const VerificationMeta _showLetterheadMeta = const VerificationMeta(
+    'showLetterhead',
+  );
+  @override
+  late final GeneratedColumn<bool> showLetterhead = GeneratedColumn<bool>(
+    'show_letterhead',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("show_letterhead" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -2584,6 +2599,7 @@ class $CompanySettingsTable extends CompanySettings
     monthlyHoursGoal,
     reportsYAxisMax,
     invoiceLetterheadImagePath,
+    showLetterhead,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -2678,6 +2694,15 @@ class $CompanySettingsTable extends CompanySettings
         ),
       );
     }
+    if (data.containsKey('show_letterhead')) {
+      context.handle(
+        _showLetterheadMeta,
+        showLetterhead.isAcceptableOrUnknown(
+          data['show_letterhead']!,
+          _showLetterheadMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -2727,6 +2752,10 @@ class $CompanySettingsTable extends CompanySettings
         DriftSqlType.string,
         data['${effectivePrefix}invoice_letterhead_image_path'],
       ),
+      showLetterhead: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}show_letterhead'],
+      )!,
     );
   }
 
@@ -2747,6 +2776,7 @@ class CompanySetting extends DataClass implements Insertable<CompanySetting> {
   final int? monthlyHoursGoal;
   final double? reportsYAxisMax;
   final String? invoiceLetterheadImagePath;
+  final bool showLetterhead;
   const CompanySetting({
     required this.id,
     this.companyName,
@@ -2758,6 +2788,7 @@ class CompanySetting extends DataClass implements Insertable<CompanySetting> {
     this.monthlyHoursGoal,
     this.reportsYAxisMax,
     this.invoiceLetterheadImagePath,
+    required this.showLetterhead,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -2792,6 +2823,7 @@ class CompanySetting extends DataClass implements Insertable<CompanySetting> {
         invoiceLetterheadImagePath,
       );
     }
+    map['show_letterhead'] = Variable<bool>(showLetterhead);
     return map;
   }
 
@@ -2824,6 +2856,7 @@ class CompanySetting extends DataClass implements Insertable<CompanySetting> {
           invoiceLetterheadImagePath == null && nullToAbsent
           ? const Value.absent()
           : Value(invoiceLetterheadImagePath),
+      showLetterhead: Value(showLetterhead),
     );
   }
 
@@ -2847,6 +2880,7 @@ class CompanySetting extends DataClass implements Insertable<CompanySetting> {
       invoiceLetterheadImagePath: serializer.fromJson<String?>(
         json['invoiceLetterheadImagePath'],
       ),
+      showLetterhead: serializer.fromJson<bool>(json['showLetterhead']),
     );
   }
   @override
@@ -2865,6 +2899,7 @@ class CompanySetting extends DataClass implements Insertable<CompanySetting> {
       'invoiceLetterheadImagePath': serializer.toJson<String?>(
         invoiceLetterheadImagePath,
       ),
+      'showLetterhead': serializer.toJson<bool>(showLetterhead),
     };
   }
 
@@ -2879,6 +2914,7 @@ class CompanySetting extends DataClass implements Insertable<CompanySetting> {
     Value<int?> monthlyHoursGoal = const Value.absent(),
     Value<double?> reportsYAxisMax = const Value.absent(),
     Value<String?> invoiceLetterheadImagePath = const Value.absent(),
+    bool? showLetterhead,
   }) => CompanySetting(
     id: id ?? this.id,
     companyName: companyName.present ? companyName.value : this.companyName,
@@ -2904,6 +2940,7 @@ class CompanySetting extends DataClass implements Insertable<CompanySetting> {
     invoiceLetterheadImagePath: invoiceLetterheadImagePath.present
         ? invoiceLetterheadImagePath.value
         : this.invoiceLetterheadImagePath,
+    showLetterhead: showLetterhead ?? this.showLetterhead,
   );
   CompanySetting copyWithCompanion(CompanySettingsCompanion data) {
     return CompanySetting(
@@ -2933,6 +2970,9 @@ class CompanySetting extends DataClass implements Insertable<CompanySetting> {
       invoiceLetterheadImagePath: data.invoiceLetterheadImagePath.present
           ? data.invoiceLetterheadImagePath.value
           : this.invoiceLetterheadImagePath,
+      showLetterhead: data.showLetterhead.present
+          ? data.showLetterhead.value
+          : this.showLetterhead,
     );
   }
 
@@ -2948,7 +2988,8 @@ class CompanySetting extends DataClass implements Insertable<CompanySetting> {
           ..write('weeklyHoursGoal: $weeklyHoursGoal, ')
           ..write('monthlyHoursGoal: $monthlyHoursGoal, ')
           ..write('reportsYAxisMax: $reportsYAxisMax, ')
-          ..write('invoiceLetterheadImagePath: $invoiceLetterheadImagePath')
+          ..write('invoiceLetterheadImagePath: $invoiceLetterheadImagePath, ')
+          ..write('showLetterhead: $showLetterhead')
           ..write(')'))
         .toString();
   }
@@ -2965,6 +3006,7 @@ class CompanySetting extends DataClass implements Insertable<CompanySetting> {
     monthlyHoursGoal,
     reportsYAxisMax,
     invoiceLetterheadImagePath,
+    showLetterhead,
   );
   @override
   bool operator ==(Object other) =>
@@ -2979,7 +3021,8 @@ class CompanySetting extends DataClass implements Insertable<CompanySetting> {
           other.weeklyHoursGoal == this.weeklyHoursGoal &&
           other.monthlyHoursGoal == this.monthlyHoursGoal &&
           other.reportsYAxisMax == this.reportsYAxisMax &&
-          other.invoiceLetterheadImagePath == this.invoiceLetterheadImagePath);
+          other.invoiceLetterheadImagePath == this.invoiceLetterheadImagePath &&
+          other.showLetterhead == this.showLetterhead);
 }
 
 class CompanySettingsCompanion extends UpdateCompanion<CompanySetting> {
@@ -2993,6 +3036,7 @@ class CompanySettingsCompanion extends UpdateCompanion<CompanySetting> {
   final Value<int?> monthlyHoursGoal;
   final Value<double?> reportsYAxisMax;
   final Value<String?> invoiceLetterheadImagePath;
+  final Value<bool> showLetterhead;
   const CompanySettingsCompanion({
     this.id = const Value.absent(),
     this.companyName = const Value.absent(),
@@ -3004,6 +3048,7 @@ class CompanySettingsCompanion extends UpdateCompanion<CompanySetting> {
     this.monthlyHoursGoal = const Value.absent(),
     this.reportsYAxisMax = const Value.absent(),
     this.invoiceLetterheadImagePath = const Value.absent(),
+    this.showLetterhead = const Value.absent(),
   });
   CompanySettingsCompanion.insert({
     this.id = const Value.absent(),
@@ -3016,6 +3061,7 @@ class CompanySettingsCompanion extends UpdateCompanion<CompanySetting> {
     this.monthlyHoursGoal = const Value.absent(),
     this.reportsYAxisMax = const Value.absent(),
     this.invoiceLetterheadImagePath = const Value.absent(),
+    this.showLetterhead = const Value.absent(),
   });
   static Insertable<CompanySetting> custom({
     Expression<int>? id,
@@ -3028,6 +3074,7 @@ class CompanySettingsCompanion extends UpdateCompanion<CompanySetting> {
     Expression<int>? monthlyHoursGoal,
     Expression<double>? reportsYAxisMax,
     Expression<String>? invoiceLetterheadImagePath,
+    Expression<bool>? showLetterhead,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -3041,6 +3088,7 @@ class CompanySettingsCompanion extends UpdateCompanion<CompanySetting> {
       if (reportsYAxisMax != null) 'reports_y_axis_max': reportsYAxisMax,
       if (invoiceLetterheadImagePath != null)
         'invoice_letterhead_image_path': invoiceLetterheadImagePath,
+      if (showLetterhead != null) 'show_letterhead': showLetterhead,
     });
   }
 
@@ -3055,6 +3103,7 @@ class CompanySettingsCompanion extends UpdateCompanion<CompanySetting> {
     Value<int?>? monthlyHoursGoal,
     Value<double?>? reportsYAxisMax,
     Value<String?>? invoiceLetterheadImagePath,
+    Value<bool>? showLetterhead,
   }) {
     return CompanySettingsCompanion(
       id: id ?? this.id,
@@ -3068,6 +3117,7 @@ class CompanySettingsCompanion extends UpdateCompanion<CompanySetting> {
       reportsYAxisMax: reportsYAxisMax ?? this.reportsYAxisMax,
       invoiceLetterheadImagePath:
           invoiceLetterheadImagePath ?? this.invoiceLetterheadImagePath,
+      showLetterhead: showLetterhead ?? this.showLetterhead,
     );
   }
 
@@ -3106,6 +3156,9 @@ class CompanySettingsCompanion extends UpdateCompanion<CompanySetting> {
         invoiceLetterheadImagePath.value,
       );
     }
+    if (showLetterhead.present) {
+      map['show_letterhead'] = Variable<bool>(showLetterhead.value);
+    }
     return map;
   }
 
@@ -3121,7 +3174,8 @@ class CompanySettingsCompanion extends UpdateCompanion<CompanySetting> {
           ..write('weeklyHoursGoal: $weeklyHoursGoal, ')
           ..write('monthlyHoursGoal: $monthlyHoursGoal, ')
           ..write('reportsYAxisMax: $reportsYAxisMax, ')
-          ..write('invoiceLetterheadImagePath: $invoiceLetterheadImagePath')
+          ..write('invoiceLetterheadImagePath: $invoiceLetterheadImagePath, ')
+          ..write('showLetterhead: $showLetterhead')
           ..write(')'))
         .toString();
   }
@@ -6166,6 +6220,7 @@ typedef $$CompanySettingsTableCreateCompanionBuilder =
       Value<int?> monthlyHoursGoal,
       Value<double?> reportsYAxisMax,
       Value<String?> invoiceLetterheadImagePath,
+      Value<bool> showLetterhead,
     });
 typedef $$CompanySettingsTableUpdateCompanionBuilder =
     CompanySettingsCompanion Function({
@@ -6179,6 +6234,7 @@ typedef $$CompanySettingsTableUpdateCompanionBuilder =
       Value<int?> monthlyHoursGoal,
       Value<double?> reportsYAxisMax,
       Value<String?> invoiceLetterheadImagePath,
+      Value<bool> showLetterhead,
     });
 
 class $$CompanySettingsTableFilterComposer
@@ -6237,6 +6293,11 @@ class $$CompanySettingsTableFilterComposer
 
   ColumnFilters<String> get invoiceLetterheadImagePath => $composableBuilder(
     column: $table.invoiceLetterheadImagePath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get showLetterhead => $composableBuilder(
+    column: $table.showLetterhead,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -6299,6 +6360,11 @@ class $$CompanySettingsTableOrderingComposer
     column: $table.invoiceLetterheadImagePath,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<bool> get showLetterhead => $composableBuilder(
+    column: $table.showLetterhead,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$CompanySettingsTableAnnotationComposer
@@ -6355,6 +6421,11 @@ class $$CompanySettingsTableAnnotationComposer
     column: $table.invoiceLetterheadImagePath,
     builder: (column) => column,
   );
+
+  GeneratedColumn<bool> get showLetterhead => $composableBuilder(
+    column: $table.showLetterhead,
+    builder: (column) => column,
+  );
 }
 
 class $$CompanySettingsTableTableManager
@@ -6405,6 +6476,7 @@ class $$CompanySettingsTableTableManager
                 Value<double?> reportsYAxisMax = const Value.absent(),
                 Value<String?> invoiceLetterheadImagePath =
                     const Value.absent(),
+                Value<bool> showLetterhead = const Value.absent(),
               }) => CompanySettingsCompanion(
                 id: id,
                 companyName: companyName,
@@ -6416,6 +6488,7 @@ class $$CompanySettingsTableTableManager
                 monthlyHoursGoal: monthlyHoursGoal,
                 reportsYAxisMax: reportsYAxisMax,
                 invoiceLetterheadImagePath: invoiceLetterheadImagePath,
+                showLetterhead: showLetterhead,
               ),
           createCompanionCallback:
               ({
@@ -6430,6 +6503,7 @@ class $$CompanySettingsTableTableManager
                 Value<double?> reportsYAxisMax = const Value.absent(),
                 Value<String?> invoiceLetterheadImagePath =
                     const Value.absent(),
+                Value<bool> showLetterhead = const Value.absent(),
               }) => CompanySettingsCompanion.insert(
                 id: id,
                 companyName: companyName,
@@ -6441,6 +6515,7 @@ class $$CompanySettingsTableTableManager
                 monthlyHoursGoal: monthlyHoursGoal,
                 reportsYAxisMax: reportsYAxisMax,
                 invoiceLetterheadImagePath: invoiceLetterheadImagePath,
+                showLetterhead: showLetterhead,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

@@ -85,6 +85,8 @@ class CompanySettings extends Table {
   IntColumn get monthlyHoursGoal => integer().nullable()();
   RealColumn get reportsYAxisMax => real().nullable()();
   TextColumn get invoiceLetterheadImagePath => text().nullable()();
+  BoolColumn get showLetterhead => boolean().withDefault(const Constant(true))();
+  
 
   @override
   Set<Column> get primaryKey => {id};
@@ -103,6 +105,7 @@ LazyDatabase _openConnection() {
     // Use getApplicationSupportDirectory to avoid OneDrive
     final dbFolder = await getApplicationSupportDirectory();
     final file = File(p.join(dbFolder.path, 'app_tracker.sqlite'));
+    print(dbFolder);
 
     return NativeDatabase.createInBackground(file);
   });
