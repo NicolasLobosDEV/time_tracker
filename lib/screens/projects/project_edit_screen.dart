@@ -117,7 +117,7 @@ class _ProjectEditScreenState extends State<ProjectEditScreen> {
                 child: ListView(
                   children: [
                     DropdownButtonFormField<int>(
-                      value: _selectedClientId,
+                      initialValue: _selectedClientId,
                       decoration: const InputDecoration(labelText: 'Client'),
                       hint: const Text('Select a client'),
                       items: _clients.map((client) {

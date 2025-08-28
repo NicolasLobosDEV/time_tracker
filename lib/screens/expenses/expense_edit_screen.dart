@@ -130,7 +130,7 @@ class _ExpenseEditScreenState extends State<ExpenseEditScreen> {
 
                   // Category Dropdown
                   DropdownButtonFormField<String>(
-                    value: _selectedCategory,
+                    initialValue: _selectedCategory,
                     decoration: const InputDecoration(labelText: 'Category'),
                     items: _categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
                     onChanged: (v) => setState(() => _selectedCategory = v),
@@ -156,7 +156,7 @@ class _ExpenseEditScreenState extends State<ExpenseEditScreen> {
 
                   // Project and Client selectors
                   DropdownButtonFormField<int>(
-                    value: _selectedProjectId,
+                    initialValue: _selectedProjectId,
                     decoration: const InputDecoration(labelText: 'Associate with Project (optional)'),
                     items: _projects.map((p) => DropdownMenuItem(value: p.id, child: Text(p.name))).toList(),
                     onChanged: (v) => setState(() { _selectedProjectId = v; _selectedClientId = null; }),
@@ -165,7 +165,7 @@ class _ExpenseEditScreenState extends State<ExpenseEditScreen> {
                   const Center(child: Text('OR')),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<int>(
-                    value: _selectedClientId,
+                    initialValue: _selectedClientId,
                     decoration: const InputDecoration(labelText: 'Associate with Client (optional)'),
                     items: _clients.map((c) => DropdownMenuItem(value: c.id, child: Text(c.name))).toList(),
                     onChanged: (v) => setState(() { _selectedClientId = v; _selectedProjectId = null; }),

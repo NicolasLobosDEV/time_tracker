@@ -132,7 +132,7 @@ class _AddEntryDialogState extends State<AddEntryDialog> {
                       ),
                       const SizedBox(height: 16),
                       DropdownButtonFormField<int>(
-                        value: _selectedProjectId,
+                        initialValue: _selectedProjectId,
                         decoration: const InputDecoration(labelText: 'Project'),
                         hint: const Text('Select a project'),
                         // FIX 3: Corrected the builder to use the 'db' variable already in scope
@@ -149,7 +149,7 @@ class _AddEntryDialogState extends State<AddEntryDialog> {
                       ),
                       const SizedBox(height: 16),
                       DropdownButtonFormField<String>(
-                        value: _selectedCategory,
+                        initialValue: _selectedCategory,
                         decoration: const InputDecoration(labelText: 'Category'),
                         hint: const Text('Select a category'),
                         items: _categories.map((category) {

@@ -99,7 +99,7 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
               builder: (context, snapshot) {
                 if (!snapshot.hasData) return const CircularProgressIndicator();
                 return DropdownButtonFormField<int>(
-                  value: _selectedProjectId,
+                  initialValue: _selectedProjectId,
                   items: snapshot.data!.map((p) => DropdownMenuItem(value: p.id, child: Text(p.name))).toList(),
                   onChanged: (v) => setState(() => _selectedProjectId = v!),
                   decoration: const InputDecoration(labelText: 'Project'),
@@ -108,7 +108,7 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              value: _selectedCategory,
+              initialValue: _selectedCategory,
               items: _categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
               onChanged: (v) => setState(() => _selectedCategory = v!),
               decoration: const InputDecoration(labelText: 'Category'),

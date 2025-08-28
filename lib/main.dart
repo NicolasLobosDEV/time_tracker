@@ -2,7 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:time_tracker/database/database.dart';
-import 'package:time_tracker/screens/home_screen.dart';
+// Import the main screen with the navigation bar
+import 'package:time_tracker/screens/main_screen.dart';
 
 
 void main() {
@@ -39,7 +40,8 @@ class MyApp extends StatelessWidget {
           backgroundColor: Colors.teal,
         ),
       ),
-      home: const HomeScreen(),
+      // Use MainScreen to show the navigation bar
+      home: const MainScreen(),
     );
   }
 }
