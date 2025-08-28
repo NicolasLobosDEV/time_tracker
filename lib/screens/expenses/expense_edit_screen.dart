@@ -20,7 +20,13 @@ class _ExpenseEditScreenState extends State<ExpenseEditScreen> {
   final _distanceController = TextEditingController();
   final _costPerUnitController = TextEditingController();
 
-  final List<String> _categories = ['Day Rate', 'Lodging', 'Meals', 'Mileage', 'Other'];
+  final List<String> _categories = [
+    'Day Rate',
+    'Lodging',
+    'Meals',
+    'Mileage',
+    'Other',
+  ];
   String? _selectedCategory;
 
   DateTime _selectedDate = DateTime.now();
@@ -73,20 +79,29 @@ class _ExpenseEditScreenState extends State<ExpenseEditScreen> {
     _amountController.text = (distance * costPerUnit).toStringAsFixed(2);
   }
 
-  Future<void> _saveExpense() async {
+  Future<void> _save() async {
     if (_formKey.currentState!.validate()) {
       final db = Provider.of<AppDatabase>(context, listen: false);
-
       final entity = ExpensesCompanion(
-        id: _isEditing ? drift.Value(widget.expense!.id) : const drift.Value.absent(),
+        id: _isEditing
+            ? drift.Value(widget.expense!.id)
+            : const drift.Value.absent(),
         description: drift.Value(_descriptionController.text),
         date: drift.Value(_selectedDate),
         category: drift.Value(_selectedCategory!),
         amount: drift.Value(double.tryParse(_amountController.text) ?? 0.0),
-        projectId: _selectedProjectId == null ? const drift.Value.absent() : drift.Value(_selectedProjectId),
-        clientId: _selectedClientId == null ? const drift.Value.absent() : drift.Value(_selectedClientId),
-        distance: _isMileage ? drift.Value(double.tryParse(_distanceController.text)) : const drift.Value.absent(),
-        costPerUnit: _isMileage ? drift.Value(double.tryParse(_costPerUnitController.text)) : const drift.Value.absent(),
+        projectId: _selectedProjectId == null
+            ? const drift.Value.absent()
+            : drift.Value(_selectedProjectId),
+        clientId: _selectedClientId == null
+            ? const drift.Value.absent()
+            : drift.Value(_selectedClientId),
+        distance: _isMileage
+            ? drift.Value(double.tryParse(_distanceController.text))
+            : const drift.Value.absent(),
+        costPerUnit: _isMileage
+            ? drift.Value(double.tryParse(_costPerUnitController.text))
+            : const drift.Value.absent(),
       );
 
       if (_isEditing) {
@@ -103,76 +118,123 @@ class _ExpenseEditScreenState extends State<ExpenseEditScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(_isEditing ? 'Edit Expense' : 'Add Expense'),
-        actions: [IconButton(icon: const Icon(Icons.save), onPressed: _saveExpense)],
+        actions: [IconButton(icon: const Icon(Icons.save), onPressed: _save)],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : Form(
-              key: _formKey,
-              child: ListView(
-                padding: const EdgeInsets.all(16.0),
-                children: [
-                  // Date Picker
-                  ListTile(
-                    title: const Text('Date of Expense'),
-                    subtitle: Text(DateFormat.yMMMEd().format(_selectedDate)),
-                    trailing: const Icon(Icons.calendar_today),
-                    onTap: () async {
-                      final picked = await showDatePicker(context: context, initialDate: _selectedDate, firstDate: DateTime(2020), lastDate: DateTime.now());
-                      if (picked != null) setState(() => _selectedDate = picked);
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  // Description
-                  TextFormField(controller: _descriptionController, decoration: const InputDecoration(labelText: 'Description'), validator: (v) => v!.isEmpty ? 'Required' : null),
-                  const SizedBox(height: 16),
+          : _buildExpenseForm(),
+    );
+  }
 
-                  // Category Dropdown
-                  DropdownButtonFormField<String>(
-                    initialValue: _selectedCategory,
-                    decoration: const InputDecoration(labelText: 'Category'),
-                    items: _categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
-                    onChanged: (v) => setState(() => _selectedCategory = v),
-                    validator: (v) => v == null ? 'Required' : null,
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Conditional UI for Mileage
-                  if (_isMileage) ...[
-                    Row(
-                      children: [
-                        Expanded(child: TextFormField(controller: _distanceController, decoration: const InputDecoration(labelText: 'Distance (km/miles)'), keyboardType: TextInputType.number, onChanged: (_) => _calculateMileageTotal())),
-                        const SizedBox(width: 16),
-                        Expanded(child: TextFormField(controller: _costPerUnitController, decoration: const InputDecoration(labelText: 'Cost per Unit'), keyboardType: TextInputType.number, onChanged: (_) => _calculateMileageTotal())),
-                      ],
+  Widget _buildExpenseForm() {
+    return Form(
+      key: _formKey,
+      child: ListView(
+        padding: const EdgeInsets.all(16.0),
+        children: [
+          ListTile(
+            title: const Text('Date of Expense'),
+            subtitle: Text(DateFormat.yMMMEd().format(_selectedDate)),
+            trailing: const Icon(Icons.calendar_today),
+            onTap: () async {
+              final picked = await showDatePicker(
+                context: context,
+                initialDate: _selectedDate,
+                firstDate: DateTime(2020),
+                lastDate: DateTime.now(),
+              );
+              if (picked != null) setState(() => _selectedDate = picked);
+            },
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _descriptionController,
+            decoration: const InputDecoration(labelText: 'Description'),
+            validator: (description) =>
+                description!.isEmpty ? 'Required' : null,
+          ),
+          const SizedBox(height: 16),
+          DropdownButtonFormField<String>(
+            value: _selectedCategory,
+            decoration: const InputDecoration(labelText: 'Category'),
+            items: _categories
+                .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                .toList(),
+            onChanged: (newValue) =>
+                setState(() => _selectedCategory = newValue),
+            validator: (category) => category == null ? 'Required' : null,
+          ),
+          const SizedBox(height: 16),
+          if (_isMileage) ...[
+            Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    controller: _distanceController,
+                    decoration: const InputDecoration(
+                      labelText: 'Distance (km/miles)',
                     ),
-                    const SizedBox(height: 16),
-                  ],
-
-                  // Amount (read-only for mileage)
-                  TextFormField(controller: _amountController, decoration: InputDecoration(labelText: 'Total Amount', prefixText: 'USD '), readOnly: _isMileage, keyboardType: TextInputType.number, validator: (v) => v!.isEmpty ? 'Required' : null),
-                  const SizedBox(height: 16),
-
-                  // Project and Client selectors
-                  DropdownButtonFormField<int>(
-                    initialValue: _selectedProjectId,
-                    decoration: const InputDecoration(labelText: 'Associate with Project (optional)'),
-                    items: _projects.map((p) => DropdownMenuItem(value: p.id, child: Text(p.name))).toList(),
-                    onChanged: (v) => setState(() { _selectedProjectId = v; _selectedClientId = null; }),
+                    keyboardType: TextInputType.number,
+                    onChanged: (_) => _calculateMileageTotal(),
                   ),
-                  const SizedBox(height: 8),
-                  const Center(child: Text('OR')),
-                  const SizedBox(height: 8),
-                  DropdownButtonFormField<int>(
-                    initialValue: _selectedClientId,
-                    decoration: const InputDecoration(labelText: 'Associate with Client (optional)'),
-                    items: _clients.map((c) => DropdownMenuItem(value: c.id, child: Text(c.name))).toList(),
-                    onChanged: (v) => setState(() { _selectedClientId = v; _selectedProjectId = null; }),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: TextFormField(
+                    controller: _costPerUnitController,
+                    decoration: const InputDecoration(
+                      labelText: 'Cost per Unit',
+                    ),
+                    keyboardType: TextInputType.number,
+                    onChanged: (_) => _calculateMileageTotal(),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
+            const SizedBox(height: 16),
+          ],
+          TextFormField(
+            controller: _amountController,
+            decoration: InputDecoration(
+              labelText: 'Total Amount',
+              prefixText: 'USD ',
+            ),
+            readOnly: _isMileage,
+            keyboardType: TextInputType.number,
+            validator: (amount) => amount!.isEmpty ? 'Required' : null,
+          ),
+          const SizedBox(height: 16),
+          DropdownButtonFormField<int>(
+            value: _selectedProjectId,
+            decoration: const InputDecoration(
+              labelText: 'Associate with Project (optional)',
+            ),
+            items: _projects
+                .map((p) => DropdownMenuItem(value: p.id, child: Text(p.name)))
+                .toList(),
+            onChanged: (newValue) => setState(() {
+              _selectedProjectId = newValue;
+              _selectedClientId = null;
+            }),
+          ),
+          const SizedBox(height: 8),
+          const Center(child: Text('OR')),
+          const SizedBox(height: 8),
+          DropdownButtonFormField<int>(
+            value: _selectedClientId,
+            decoration: const InputDecoration(
+              labelText: 'Associate with Client (optional)',
+            ),
+            items: _clients
+                .map((c) => DropdownMenuItem(value: c.id, child: Text(c.name)))
+                .toList(),
+            onChanged: (newValue) => setState(() {
+              _selectedClientId = newValue;
+              _selectedProjectId = null;
+            }),
+          ),
+        ],
+      ),
     );
   }
 }

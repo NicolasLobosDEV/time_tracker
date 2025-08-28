@@ -30,7 +30,8 @@ class _ProjectEditScreenState extends State<ProjectEditScreen> {
     super.initState();
     _nameController = TextEditingController(text: widget.project?.name ?? '');
     _rateController = TextEditingController(text: widget.project?.hourlyRate.toString() ?? '');
-    _limitController = TextEditingController(text: widget.project?.monthlyTimeLimitHours?.toString() ?? '');
+    // FIX: Use correct field name from Project class
+    _limitController = TextEditingController(text: widget.project?.monthlyTimeLimit?.toString() ?? '');
     _selectedClientId = widget.project?.clientId;
     // REMOVED _fetchClients() call from here
   }
@@ -73,7 +74,8 @@ class _ProjectEditScreenState extends State<ProjectEditScreen> {
         name: drift.Value(_nameController.text),
         clientId: drift.Value(_selectedClientId!),
         hourlyRate: drift.Value(double.tryParse(_rateController.text) ?? 0.0),
-        monthlyTimeLimitHours: drift.Value(int.tryParse(_limitController.text)),
+        // FIX: Use correct field name from ProjectsCompanion
+        monthlyTimeLimit: drift.Value(int.tryParse(_limitController.text)),
       );
 
       if (_isEditing) {

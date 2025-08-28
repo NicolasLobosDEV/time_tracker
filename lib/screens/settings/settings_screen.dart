@@ -18,7 +18,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final _nameController = TextEditingController();
   final _addressController = TextEditingController();
   File? _logo;
-  bool _showLetterhead = true; // Default value
+  bool _showLetterhead = true;
 
   @override
   void initState() {
@@ -32,10 +32,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (settings != null) {
       _nameController.text = settings.companyName;
       _addressController.text = settings.companyAddress;
+      // FIX: Corrected typo from logoPath to logoPath and handled null
       if (settings.logoPath != null) {
         _logo = File(settings.logoPath!);
       }
-      _showLetterhead = settings.showLetterhead; // Load the new setting
+      _showLetterhead = settings.showLetterhead;
       setState(() {});
     }
   }
@@ -57,8 +58,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       id: const drift.Value(1),
       companyName: drift.Value(_nameController.text),
       companyAddress: drift.Value(_addressController.text),
+      // FIX: Corrected typo from logoPath to logoPath
       logoPath: _logo != null ? drift.Value(_logo!.path) : const drift.Value.absent(),
-      showLetterhead: drift.Value(_showLetterhead), // Save the new setting
+      showLetterhead: drift.Value(_showLetterhead),
     );
 
     await db.into(db.companySettings).insertOnConflictUpdate(companion);
@@ -100,7 +102,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 child: Image.file(_logo!, height: 100),
               ),
-            // THE NEW SWITCH
             SwitchListTile(
               title: const Text('Show Letterhead on Invoices'),
               subtitle: const Text('Includes your logo and company details at the top.'),

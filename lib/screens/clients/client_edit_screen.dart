@@ -29,8 +29,12 @@ class _ClientEditScreenState extends State<ClientEditScreen> {
     super.initState();
     _nameController = TextEditingController(text: widget.client?.name ?? '');
     _emailController = TextEditingController(text: widget.client?.email ?? '');
-    _addressController = TextEditingController(text: widget.client?.address ?? '');
-    _currencyController = TextEditingController(text: widget.client?.currency ?? 'USD');
+    _addressController = TextEditingController(
+      text: widget.client?.address ?? '',
+    );
+    _currencyController = TextEditingController(
+      text: widget.client?.currency ?? 'USD',
+    );
   }
 
   @override
@@ -42,13 +46,13 @@ class _ClientEditScreenState extends State<ClientEditScreen> {
     super.dispose();
   }
 
-  void _saveClient() {
+  void _save() {
     if (_formKey.currentState!.validate()) {
       final db = Provider.of<AppDatabase>(context, listen: false);
-
       final entity = ClientsCompanion(
-        // If we are editing, we must provide the id.
-        id: _isEditing ? drift.Value(widget.client!.id) : const drift.Value.absent(),
+        id: _isEditing
+            ? drift.Value(widget.client!.id)
+            : const drift.Value.absent(),
         name: drift.Value(_nameController.text),
         email: drift.Value(_emailController.text),
         address: drift.Value(_addressController.text),
@@ -61,7 +65,6 @@ class _ClientEditScreenState extends State<ClientEditScreen> {
         db.into(db.clients).insert(entity);
       }
 
-      // Go back to the previous screen
       Navigator.of(context).pop();
     }
   }
@@ -71,53 +74,54 @@ class _ClientEditScreenState extends State<ClientEditScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(_isEditing ? 'Edit Client' : 'Add Client'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.save),
-            onPressed: _saveClient,
-          ),
-        ],
+        actions: [IconButton(icon: const Icon(Icons.save), onPressed: _save)],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            children: [
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Client Name'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a name.';
-                  }
-                  return null;
-                },
+      body: _buildClientForm(),
+    );
+  }
+
+  Widget _buildClientForm() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Form(
+        key: _formKey,
+        child: ListView(
+          children: [
+            TextFormField(
+              controller: _nameController,
+              decoration: const InputDecoration(labelText: 'Client Name'),
+              validator: (name) {
+                if (name == null || name.isEmpty) {
+                  return 'Please enter a name.';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _emailController,
+              decoration: const InputDecoration(labelText: 'Email'),
+              keyboardType: TextInputType.emailAddress,
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _addressController,
+              decoration: const InputDecoration(labelText: 'Address'),
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _currencyController,
+              decoration: const InputDecoration(
+                labelText: 'Currency (e.g., USD, BRL)',
               ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _emailController,
-                decoration: const InputDecoration(labelText: 'Email'),
-                keyboardType: TextInputType.emailAddress,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _addressController,
-                decoration: const InputDecoration(labelText: 'Address'),
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _currencyController,
-                decoration: const InputDecoration(labelText: 'Currency (e.g., USD, BRL)'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a currency code.';
-                  }
-                  return null;
-                },
-              ),
-            ],
-          ),
+              validator: (currency) {
+                if (currency == null || currency.isEmpty) {
+                  return 'Please enter a currency code.';
+                }
+                return null;
+              },
+            ),
+          ],
         ),
       ),
     );

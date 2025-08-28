@@ -1,41 +1,41 @@
+// lib/database/database.dart
 import 'dart:io';
 import 'package:drift/drift.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:drift/native.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 
 part 'database.g.dart';
 
-// (Your table classes like Clients, Projects, etc. remain here)
+// Define tables
 class Clients extends Table {
   IntColumn get id => integer().autoIncrement()();
-  TextColumn get name => text().withLength(min: 1)();
-  TextColumn get address => text().nullable()();
+  TextColumn get name => text()();
   TextColumn get email => text().nullable()();
+  TextColumn get address => text().nullable()();
   TextColumn get currency => text().withDefault(const Constant('USD'))();
 }
 
 class Projects extends Table {
   IntColumn get id => integer().autoIncrement()();
-  TextColumn get name => text().withLength(min: 1)();
   IntColumn get clientId => integer().references(Clients, #id)();
+  TextColumn get name => text()();
   RealColumn get hourlyRate => real()();
-  IntColumn get monthlyTimeLimitHours => integer().nullable()();
+  IntColumn get monthlyTimeLimit => integer().nullable()();
+  TextColumn get status => text().withDefault(const Constant('Active'))();
 }
 
 class TimeEntries extends Table {
   IntColumn get id => integer().autoIncrement()();
-  TextColumn get description => text()();
   IntColumn get projectId => integer().references(Projects, #id)();
-  TextColumn get category => text().nullable()();
+  TextColumn get description => text()();
   DateTimeColumn get startTime => dateTime()();
   DateTimeColumn get endTime => dateTime().nullable()();
+  TextColumn get category => text()();
   BoolColumn get isBillable => boolean().withDefault(const Constant(true))();
   BoolColumn get isBilled => boolean().withDefault(const Constant(false))();
-  IntColumn get invoiceId => integer().nullable()();
 }
 
-// In lib/database/database.dart
 class Expenses extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get description => text()();
@@ -51,48 +51,37 @@ class Expenses extends Table {
 
 class Invoices extends Table {
   IntColumn get id => integer().autoIncrement()();
-  TextColumn get invoiceIdString => text()(); 
+  TextColumn get invoiceIdString => text()();
   IntColumn get clientId => integer().references(Clients, #id)();
   DateTimeColumn get issueDate => dateTime()();
   DateTimeColumn get dueDate => dateTime()();
   RealColumn get totalAmount => real()();
+  TextColumn get status => text()();
   TextColumn get notes => text().nullable()();
-  TextColumn get status => text().withDefault(const Constant('Draft'))();
   TextColumn get lineItemsJson => text().nullable()();
 }
 
 class Todos extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get title => text()();
-  TextColumn get description => text().nullable()();
-  TextColumn get priority => text()(); // P1, P2, P3
-  DateTimeColumn get startTime => dateTime()();
-  DateTimeColumn get deadline => dateTime()();
   IntColumn get projectId => integer().references(Projects, #id)();
   TextColumn get category => text()();
-  RealColumn get estimatedHours => real().nullable()();
+  DateTimeColumn get deadline => dateTime()();
+  TextColumn get priority => text()();
   BoolColumn get isCompleted => boolean().withDefault(const Constant(false))();
 }
 
 class CompanySettings extends Table {
-  IntColumn get id => integer().withDefault(const Constant(1))();
-  TextColumn get companyName => text().nullable()();
-  TextColumn get companyAddress => text().nullable()();
-  TextColumn get cnpj => text().nullable()();
-  TextColumn get companyLogoPath => text().nullable()();
-  TextColumn get invoiceLetterhead => text().nullable()();
-  IntColumn get weeklyHoursGoal => integer().nullable()();
-  IntColumn get monthlyHoursGoal => integer().nullable()();
-  RealColumn get reportsYAxisMax => real().nullable()();
-  TextColumn get invoiceLetterheadImagePath => text().nullable()();
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get companyName => text()();
+  TextColumn get companyAddress => text()();
+  // THIS IS THE FIX
+  TextColumn get logoPath => text().nullable()();
   BoolColumn get showLetterhead => boolean().withDefault(const Constant(true))();
-  
-
-  @override
-  Set<Column> get primaryKey => {id};
 }
 
-@DriftDatabase(tables: [Clients, Projects, TimeEntries, Expenses, Invoices, CompanySettings, Todos])
+
+@DriftDatabase(tables: [Clients, Projects, TimeEntries, Expenses, Invoices, Todos, CompanySettings])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
@@ -102,11 +91,8 @@ class AppDatabase extends _$AppDatabase {
 
 LazyDatabase _openConnection() {
   return LazyDatabase(() async {
-    // Use getApplicationSupportDirectory to avoid OneDrive
     final dbFolder = await getApplicationSupportDirectory();
     final file = File(p.join(dbFolder.path, 'app_tracker.sqlite'));
-    print(dbFolder);
-
     return NativeDatabase.createInBackground(file);
   });
 }

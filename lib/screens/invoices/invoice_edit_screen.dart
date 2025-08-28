@@ -387,7 +387,7 @@ class _InvoiceEditScreenState extends State<InvoiceEditScreen> {
           IconButton(
             tooltip: 'Save Invoice',
             icon: const Icon(Icons.save),
-            onPressed: _saveInvoice,
+            onPressed: _save,
           ),
         ],
       ),
