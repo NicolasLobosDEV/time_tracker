@@ -3,8 +3,8 @@ import 'package:drift/drift.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:drift/native.dart';
 import 'package:path/path.dart' as p;
+import 'package:time_tracker/database/database.dart';
 
-part 'database.g.dart';
 
 // (Your table classes like Clients, Projects, etc. remain here)
 class Clients extends Table {
