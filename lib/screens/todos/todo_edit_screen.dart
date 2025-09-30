@@ -50,10 +50,8 @@ class _TodoEditScreenState extends State<TodoEditScreen> {
   }
 
   Future<void> _fetchProjects() async {
-    // No context used here, so no mounted check needed before the await.
     final db = Provider.of<AppDatabase>(context, listen: false);
     final projects = await db.select(db.projects).get();
-    // Now that we're back in the UI thread, check if the widget is still mounted.
     if (mounted) {
       setState(() {
         _projects = projects;
@@ -70,7 +68,7 @@ class _TodoEditScreenState extends State<TodoEditScreen> {
     super.dispose();
   }
 
-  Future<void> _selectDateTime(BuildContext context, {required bool isStart}) async {
+  Future<void> _selectDateTime({required bool isStart}) async {
     final initialDate = isStart ? _startTime : _deadline;
     final date = await showDatePicker(
       context: context,
@@ -80,7 +78,6 @@ class _TodoEditScreenState extends State<TodoEditScreen> {
     );
     if (date == null) return;
 
-    // After an await, always check if the widget is still mounted before using context again.
     if (!mounted) return;
 
     final time = await showTimePicker(
@@ -103,7 +100,6 @@ class _TodoEditScreenState extends State<TodoEditScreen> {
 
   Future<void> _saveTodo() async {
     if (_formKey.currentState!.validate()) {
-      // Capture the navigator and database provider before the async gap.
       final navigator = Navigator.of(context);
       final db = Provider.of<AppDatabase>(context, listen: false);
       
@@ -125,7 +121,6 @@ class _TodoEditScreenState extends State<TodoEditScreen> {
         await db.into(db.todos).insert(companion);
       }
       
-      // After the await, check if mounted before using the captured navigator.
       if (mounted) {
         navigator.pop();
       }
@@ -158,8 +153,8 @@ class _TodoEditScreenState extends State<TodoEditScreen> {
                   const SizedBox(height: 16),
                   DropdownButtonFormField<int>(initialValue: _selectedProjectId, decoration: const InputDecoration(labelText: 'Project'), items: _projects.map((p) => DropdownMenuItem(value: p.id, child: Text(p.name))).toList(), onChanged: (v) => setState(() => _selectedProjectId = v), validator: (v) => v == null ? 'Required' : null),
                   const SizedBox(height: 16),
-                  ListTile(title: const Text('Start Time'), subtitle: Text(DateFormat.yMd().add_jm().format(_startTime)), trailing: const Icon(Icons.calendar_today), onTap: () => _selectDateTime(context, isStart: true)),
-                  ListTile(title: const Text('Deadline'), subtitle: Text(DateFormat.yMd().add_jm().format(_deadline)), trailing: const Icon(Icons.calendar_today), onTap: () => _selectDateTime(context, isStart: false)),
+                  ListTile(title: const Text('Start Time'), subtitle: Text(DateFormat.yMd().add_jm().format(_startTime)), trailing: const Icon(Icons.calendar_today), onTap: () => _selectDateTime(isStart: true)),
+                  ListTile(title: const Text('Deadline'), subtitle: Text(DateFormat.yMd().add_jm().format(_deadline)), trailing: const Icon(Icons.calendar_today), onTap: () => _selectDateTime(isStart: false)),
                   const SizedBox(height: 16),
                   TextFormField(controller: _estimateController, decoration: const InputDecoration(labelText: 'Time Estimate (e.g., 2.5 hours)'), keyboardType: TextInputType.number),
                 ],
@@ -168,3 +163,4 @@ class _TodoEditScreenState extends State<TodoEditScreen> {
     );
   }
 }
+

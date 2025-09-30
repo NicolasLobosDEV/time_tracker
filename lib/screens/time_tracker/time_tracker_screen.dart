@@ -16,7 +16,6 @@ class TimeTrackerScreen extends StatefulWidget {
 }
 
 class _TimeTrackerScreenState extends State<TimeTrackerScreen> {
-  // --- THIS IS THE ONLY WIDGET THAT NEEDS TO CHANGE ---
   Widget _buildRecentEntriesList(AppDatabase db) {
     final recentEntriesQuery = db.select(db.timeEntries)
       ..where((t) => t.endTime.isNotNull())
@@ -36,9 +35,10 @@ class _TimeTrackerScreenState extends State<TimeTrackerScreen> {
             final entry = entries[index];
             final duration = entry.endTime!.difference(entry.startTime);
             return Card(
+              // Card color is now based on whether it has been invoiced
               color: entry.isBilled
-                  ? Colors.green.withOpacity(0.15)
-                  : Colors.red.withOpacity(0.15),
+                  ? Colors.green.withAlpha(38)
+                  : Colors.red.withAlpha(38),
               margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               child: Dismissible(
                 key: Key(entry.id.toString()),
@@ -54,7 +54,7 @@ class _TimeTrackerScreenState extends State<TimeTrackerScreen> {
                 },
                 child: ListTile(
                   title: Text(entry.description),
-                  subtitle: Text("${entry.category ?? 'No Category'} on ${DateFormat.yMd().format(entry.startTime)}"),
+                  subtitle: Text("${entry.category} on ${DateFormat.yMd().format(entry.startTime)}"),
                   onTap: () {
                     Navigator.of(context).push(MaterialPageRoute(
                       builder: (context) => EditEntryScreen(entry: entry),
@@ -65,15 +65,14 @@ class _TimeTrackerScreenState extends State<TimeTrackerScreen> {
                     children: [
                       Text(_formatDuration(duration)),
                       const SizedBox(width: 16),
-                      // --- THIS IS THE CHANGE ---
-                      // Wrap the Switch in a Tooltip to add a hover label
+                      // This switch now controls the 'isLogged' status
                       Tooltip(
                         message: 'Mark as Logged',
                         child: Switch(
-                          value: entry.isBilled,
+                          value: entry.isLogged,
                           onChanged: (newValue) {
                             final updatedEntry = TimeEntriesCompanion(
-                              isBilled: Value(newValue),
+                              isLogged: Value(newValue),
                             );
                             (db.update(db.timeEntries)..where((t) => t.id.equals(entry.id))).write(updatedEntry);
                           },
@@ -90,7 +89,6 @@ class _TimeTrackerScreenState extends State<TimeTrackerScreen> {
     );
   }
 
-  // (The rest of the file remains unchanged)
   @override
   Widget build(BuildContext context) {
     final db = Provider.of<AppDatabase>(context);
@@ -228,11 +226,11 @@ class _ActiveTimerCardState extends State<ActiveTimerCard> {
   @override
   Widget build(BuildContext context) {
     return Card(
-      color: Theme.of(context).primaryColor.withOpacity(0.2),
+      color: Theme.of(context).primaryColor.withAlpha(51),
       margin: const EdgeInsets.all(8.0),
       child: ListTile(
         title: Text(widget.activeEntry.description, style: const TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Text(widget.activeEntry.category ?? "No Category"),
+        subtitle: Text(widget.activeEntry.category),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -250,3 +248,4 @@ class _ActiveTimerCardState extends State<ActiveTimerCard> {
     );
   }
 }
+

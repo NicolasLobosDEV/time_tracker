@@ -34,6 +34,8 @@ class TimeEntries extends Table {
   TextColumn get category => text()();
   BoolColumn get isBillable => boolean().withDefault(const Constant(true))();
   BoolColumn get isBilled => boolean().withDefault(const Constant(false))();
+  // ADDED: New status for marking entries as logged in external platforms
+  BoolColumn get isLogged => boolean().withDefault(const Constant(false))();
 }
 
 class Expenses extends Table {
@@ -64,18 +66,20 @@ class Invoices extends Table {
 class Todos extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get title => text()();
+  TextColumn get description => text().nullable()();
   IntColumn get projectId => integer().references(Projects, #id)();
   TextColumn get category => text()();
   DateTimeColumn get deadline => dateTime()();
   TextColumn get priority => text()();
   BoolColumn get isCompleted => boolean().withDefault(const Constant(false))();
+  DateTimeColumn get startTime => dateTime()();
+  RealColumn get estimatedHours => real().nullable()();
 }
 
 class CompanySettings extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get companyName => text()();
   TextColumn get companyAddress => text()();
-  // THIS IS THE FIX
   TextColumn get logoPath => text().nullable()();
   BoolColumn get showLetterhead => boolean().withDefault(const Constant(true))();
 }
@@ -96,3 +100,4 @@ LazyDatabase _openConnection() {
     return NativeDatabase.createInBackground(file);
   });
 }
+

@@ -53,23 +53,32 @@ class _InvoiceEditScreenState extends State<InvoiceEditScreen> {
     final db = Provider.of<AppDatabase>(context, listen: false);
     final client = await (db.select(
       db.clients,
-    )..where((c) => c.id.equals(widget.invoice!.clientId))).getSingle();
-    setState(() {
-      _selectedClient = client;
-    });
+    )..where((c) => c.id.equals(widget.invoice!.clientId)))
+        .getSingle();
+    if (mounted) {
+      setState(() {
+        _selectedClient = client;
+      });
+    }
   }
 
   Future<void> _saveInvoice() async {
     if (!_formKey.currentState!.validate() || _selectedClient == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a client and fill all required fields.'),
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content:
+                Text('Please select a client and fill all required fields.'),
+          ),
+        );
+      }
       return;
     }
 
+    // Capture context-dependent variables before the async gap.
     final db = Provider.of<AppDatabase>(context, listen: false);
+    final navigator = Navigator.of(context);
+    
     final total = _lineItems.fold<double>(0, (sum, item) => sum + item.total);
 
     final companion = InvoicesCompanion(
@@ -91,56 +100,64 @@ class _InvoiceEditScreenState extends State<InvoiceEditScreen> {
     } else {
       await db.into(db.invoices).insert(companion);
     }
-    if (mounted) Navigator.of(context).pop();
+    if (mounted) navigator.pop();
   }
 
   Future<void> _fetchTimeEntries() async {
     if (_selectedClient == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a client first.')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select a client first.')),
+        );
+      }
       return;
     }
 
+    // Capture context-dependent variables before the async gap.
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final db = Provider.of<AppDatabase>(context, listen: false);
+    
     final dateRange = await showDateRangePicker(
       context: context,
       firstDate: DateTime(2020),
       lastDate: DateTime.now(),
     );
     if (dateRange == null) return;
-
-    final db = Provider.of<AppDatabase>(context, listen: false);
+    if (!mounted) return;
 
     final clientProjects = await (db.select(
       db.projects,
-    )..where((p) => p.clientId.equals(_selectedClient!.id))).get();
+    )..where((p) => p.clientId.equals(_selectedClient!.id)))
+        .get();
+    if (!mounted) return;
+
     if (clientProjects.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      scaffoldMessenger.showSnackBar(
         const SnackBar(content: Text('No projects found for this client.')),
       );
       return;
     }
 
-    final query =
-        db.select(db.timeEntries).join([
-            drift.innerJoin(
-              db.projects,
-              db.projects.id.equalsExp(db.timeEntries.projectId),
-            ),
-          ])
-          ..where(db.projects.clientId.equals(_selectedClient!.id))
-          ..where(db.timeEntries.isBilled.equals(false))
-          ..where(
-            db.timeEntries.startTime.isBetweenValues(
-              dateRange.start,
-              dateRange.end.add(const Duration(days: 1)),
-            ),
-          );
+    final query = db.select(db.timeEntries).join([
+      drift.innerJoin(
+        db.projects,
+        db.projects.id.equalsExp(db.timeEntries.projectId),
+      ),
+    ])
+      ..where(db.projects.clientId.equals(_selectedClient!.id))
+      ..where(db.timeEntries.isBilled.equals(false))
+      ..where(
+        db.timeEntries.startTime.isBetweenValues(
+          dateRange.start,
+          dateRange.end.add(const Duration(days: 1)),
+        ),
+      );
 
     final results = await query.get();
+    if (!mounted) return;
 
     if (results.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      scaffoldMessenger.showSnackBar(
         const SnackBar(
           content: Text('No unbilled time entries found for this period.'),
         ),
@@ -185,18 +202,23 @@ class _InvoiceEditScreenState extends State<InvoiceEditScreen> {
 
   Future<void> _fetchExpenses() async {
     if (_selectedClient == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a client first.')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select a client first.')),
+        );
+      }
       return;
     }
 
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    
     final dateRange = await showDateRangePicker(
       context: context,
       firstDate: DateTime(2020),
       lastDate: DateTime.now(),
     );
     if (dateRange == null) return;
+    if (!mounted) return;
 
     final db = Provider.of<AppDatabase>(context, listen: false);
 
@@ -205,14 +227,14 @@ class _InvoiceEditScreenState extends State<InvoiceEditScreen> {
       ..where(db.projects.clientId.equals(_selectedClient!.id))
       ..addColumns([db.projects.id]);
 
-    final projectIds = await projectIdsQuery
-        .map((row) => row.read(db.projects.id)!)
-        .get();
+    final projectIds =
+        await projectIdsQuery.map((row) => row.read(db.projects.id)!).get();
+    if (!mounted) return;
 
     // Build the where expression safely
     final drift.Expression<bool> expression = projectIds.isNotEmpty
         ? (db.expenses.clientId.equals(_selectedClient!.id) |
-              db.expenses.projectId.isIn(projectIds))
+            db.expenses.projectId.isIn(projectIds))
         : db.expenses.clientId.equals(_selectedClient!.id);
 
     final query = db.select(db.expenses)
@@ -226,9 +248,10 @@ class _InvoiceEditScreenState extends State<InvoiceEditScreen> {
       );
 
     final results = await query.get();
+    if (!mounted) return;
 
     if (results.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      scaffoldMessenger.showSnackBar(
         const SnackBar(
           content: Text('No unbilled expenses found for this period.'),
         ),
@@ -328,19 +351,25 @@ class _InvoiceEditScreenState extends State<InvoiceEditScreen> {
 
   Future<void> _previewPdf() async {
     if (_selectedClient == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a client first.')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select a client first.')),
+        );
+      }
       return;
     }
 
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
     final db = Provider.of<AppDatabase>(context, listen: false);
+
     final settings = await (db.select(
       db.companySettings,
-    )..where((s) => s.id.equals(1))).getSingleOrNull();
-
+    )..where((s) => s.id.equals(1)))
+        .getSingleOrNull();
+    if (!mounted) return;
+    
     if (settings == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      scaffoldMessenger.showSnackBar(
         const SnackBar(
           content: Text(
             'Please configure your company settings before creating a PDF.',
@@ -387,7 +416,7 @@ class _InvoiceEditScreenState extends State<InvoiceEditScreen> {
           IconButton(
             tooltip: 'Save Invoice',
             icon: const Icon(Icons.save),
-            onPressed: _save,
+            onPressed: _saveInvoice,
           ),
         ],
       ),
@@ -474,3 +503,4 @@ class _InvoiceEditScreenState extends State<InvoiceEditScreen> {
     );
   }
 }
+

@@ -857,6 +857,21 @@ class $TimeEntriesTable extends TimeEntries
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _isLoggedMeta = const VerificationMeta(
+    'isLogged',
+  );
+  @override
+  late final GeneratedColumn<bool> isLogged = GeneratedColumn<bool>(
+    'is_logged',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_logged" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -867,6 +882,7 @@ class $TimeEntriesTable extends TimeEntries
     category,
     isBillable,
     isBilled,
+    isLogged,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -936,6 +952,12 @@ class $TimeEntriesTable extends TimeEntries
         isBilled.isAcceptableOrUnknown(data['is_billed']!, _isBilledMeta),
       );
     }
+    if (data.containsKey('is_logged')) {
+      context.handle(
+        _isLoggedMeta,
+        isLogged.isAcceptableOrUnknown(data['is_logged']!, _isLoggedMeta),
+      );
+    }
     return context;
   }
 
@@ -977,6 +999,10 @@ class $TimeEntriesTable extends TimeEntries
         DriftSqlType.bool,
         data['${effectivePrefix}is_billed'],
       )!,
+      isLogged: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_logged'],
+      )!,
     );
   }
 
@@ -995,6 +1021,7 @@ class TimeEntry extends DataClass implements Insertable<TimeEntry> {
   final String category;
   final bool isBillable;
   final bool isBilled;
+  final bool isLogged;
   const TimeEntry({
     required this.id,
     required this.projectId,
@@ -1004,6 +1031,7 @@ class TimeEntry extends DataClass implements Insertable<TimeEntry> {
     required this.category,
     required this.isBillable,
     required this.isBilled,
+    required this.isLogged,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1018,6 +1046,7 @@ class TimeEntry extends DataClass implements Insertable<TimeEntry> {
     map['category'] = Variable<String>(category);
     map['is_billable'] = Variable<bool>(isBillable);
     map['is_billed'] = Variable<bool>(isBilled);
+    map['is_logged'] = Variable<bool>(isLogged);
     return map;
   }
 
@@ -1033,6 +1062,7 @@ class TimeEntry extends DataClass implements Insertable<TimeEntry> {
       category: Value(category),
       isBillable: Value(isBillable),
       isBilled: Value(isBilled),
+      isLogged: Value(isLogged),
     );
   }
 
@@ -1050,6 +1080,7 @@ class TimeEntry extends DataClass implements Insertable<TimeEntry> {
       category: serializer.fromJson<String>(json['category']),
       isBillable: serializer.fromJson<bool>(json['isBillable']),
       isBilled: serializer.fromJson<bool>(json['isBilled']),
+      isLogged: serializer.fromJson<bool>(json['isLogged']),
     );
   }
   @override
@@ -1064,6 +1095,7 @@ class TimeEntry extends DataClass implements Insertable<TimeEntry> {
       'category': serializer.toJson<String>(category),
       'isBillable': serializer.toJson<bool>(isBillable),
       'isBilled': serializer.toJson<bool>(isBilled),
+      'isLogged': serializer.toJson<bool>(isLogged),
     };
   }
 
@@ -1076,6 +1108,7 @@ class TimeEntry extends DataClass implements Insertable<TimeEntry> {
     String? category,
     bool? isBillable,
     bool? isBilled,
+    bool? isLogged,
   }) => TimeEntry(
     id: id ?? this.id,
     projectId: projectId ?? this.projectId,
@@ -1085,6 +1118,7 @@ class TimeEntry extends DataClass implements Insertable<TimeEntry> {
     category: category ?? this.category,
     isBillable: isBillable ?? this.isBillable,
     isBilled: isBilled ?? this.isBilled,
+    isLogged: isLogged ?? this.isLogged,
   );
   TimeEntry copyWithCompanion(TimeEntriesCompanion data) {
     return TimeEntry(
@@ -1100,6 +1134,7 @@ class TimeEntry extends DataClass implements Insertable<TimeEntry> {
           ? data.isBillable.value
           : this.isBillable,
       isBilled: data.isBilled.present ? data.isBilled.value : this.isBilled,
+      isLogged: data.isLogged.present ? data.isLogged.value : this.isLogged,
     );
   }
 
@@ -1113,7 +1148,8 @@ class TimeEntry extends DataClass implements Insertable<TimeEntry> {
           ..write('endTime: $endTime, ')
           ..write('category: $category, ')
           ..write('isBillable: $isBillable, ')
-          ..write('isBilled: $isBilled')
+          ..write('isBilled: $isBilled, ')
+          ..write('isLogged: $isLogged')
           ..write(')'))
         .toString();
   }
@@ -1128,6 +1164,7 @@ class TimeEntry extends DataClass implements Insertable<TimeEntry> {
     category,
     isBillable,
     isBilled,
+    isLogged,
   );
   @override
   bool operator ==(Object other) =>
@@ -1140,7 +1177,8 @@ class TimeEntry extends DataClass implements Insertable<TimeEntry> {
           other.endTime == this.endTime &&
           other.category == this.category &&
           other.isBillable == this.isBillable &&
-          other.isBilled == this.isBilled);
+          other.isBilled == this.isBilled &&
+          other.isLogged == this.isLogged);
 }
 
 class TimeEntriesCompanion extends UpdateCompanion<TimeEntry> {
@@ -1152,6 +1190,7 @@ class TimeEntriesCompanion extends UpdateCompanion<TimeEntry> {
   final Value<String> category;
   final Value<bool> isBillable;
   final Value<bool> isBilled;
+  final Value<bool> isLogged;
   const TimeEntriesCompanion({
     this.id = const Value.absent(),
     this.projectId = const Value.absent(),
@@ -1161,6 +1200,7 @@ class TimeEntriesCompanion extends UpdateCompanion<TimeEntry> {
     this.category = const Value.absent(),
     this.isBillable = const Value.absent(),
     this.isBilled = const Value.absent(),
+    this.isLogged = const Value.absent(),
   });
   TimeEntriesCompanion.insert({
     this.id = const Value.absent(),
@@ -1171,6 +1211,7 @@ class TimeEntriesCompanion extends UpdateCompanion<TimeEntry> {
     required String category,
     this.isBillable = const Value.absent(),
     this.isBilled = const Value.absent(),
+    this.isLogged = const Value.absent(),
   }) : projectId = Value(projectId),
        description = Value(description),
        startTime = Value(startTime),
@@ -1184,6 +1225,7 @@ class TimeEntriesCompanion extends UpdateCompanion<TimeEntry> {
     Expression<String>? category,
     Expression<bool>? isBillable,
     Expression<bool>? isBilled,
+    Expression<bool>? isLogged,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1194,6 +1236,7 @@ class TimeEntriesCompanion extends UpdateCompanion<TimeEntry> {
       if (category != null) 'category': category,
       if (isBillable != null) 'is_billable': isBillable,
       if (isBilled != null) 'is_billed': isBilled,
+      if (isLogged != null) 'is_logged': isLogged,
     });
   }
 
@@ -1206,6 +1249,7 @@ class TimeEntriesCompanion extends UpdateCompanion<TimeEntry> {
     Value<String>? category,
     Value<bool>? isBillable,
     Value<bool>? isBilled,
+    Value<bool>? isLogged,
   }) {
     return TimeEntriesCompanion(
       id: id ?? this.id,
@@ -1216,6 +1260,7 @@ class TimeEntriesCompanion extends UpdateCompanion<TimeEntry> {
       category: category ?? this.category,
       isBillable: isBillable ?? this.isBillable,
       isBilled: isBilled ?? this.isBilled,
+      isLogged: isLogged ?? this.isLogged,
     );
   }
 
@@ -1246,6 +1291,9 @@ class TimeEntriesCompanion extends UpdateCompanion<TimeEntry> {
     if (isBilled.present) {
       map['is_billed'] = Variable<bool>(isBilled.value);
     }
+    if (isLogged.present) {
+      map['is_logged'] = Variable<bool>(isLogged.value);
+    }
     return map;
   }
 
@@ -1259,7 +1307,8 @@ class TimeEntriesCompanion extends UpdateCompanion<TimeEntry> {
           ..write('endTime: $endTime, ')
           ..write('category: $category, ')
           ..write('isBillable: $isBillable, ')
-          ..write('isBilled: $isBilled')
+          ..write('isBilled: $isBilled, ')
+          ..write('isLogged: $isLogged')
           ..write(')'))
         .toString();
   }
@@ -2473,6 +2522,17 @@ class $TodosTable extends Todos with TableInfo<$TodosTable, Todo> {
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _descriptionMeta = const VerificationMeta(
+    'description',
+  );
+  @override
+  late final GeneratedColumn<String> description = GeneratedColumn<String>(
+    'description',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _projectIdMeta = const VerificationMeta(
     'projectId',
   );
@@ -2535,15 +2595,40 @@ class $TodosTable extends Todos with TableInfo<$TodosTable, Todo> {
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _startTimeMeta = const VerificationMeta(
+    'startTime',
+  );
+  @override
+  late final GeneratedColumn<DateTime> startTime = GeneratedColumn<DateTime>(
+    'start_time',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _estimatedHoursMeta = const VerificationMeta(
+    'estimatedHours',
+  );
+  @override
+  late final GeneratedColumn<double> estimatedHours = GeneratedColumn<double>(
+    'estimated_hours',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
     title,
+    description,
     projectId,
     category,
     deadline,
     priority,
     isCompleted,
+    startTime,
+    estimatedHours,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -2567,6 +2652,15 @@ class $TodosTable extends Todos with TableInfo<$TodosTable, Todo> {
       );
     } else if (isInserting) {
       context.missing(_titleMeta);
+    }
+    if (data.containsKey('description')) {
+      context.handle(
+        _descriptionMeta,
+        description.isAcceptableOrUnknown(
+          data['description']!,
+          _descriptionMeta,
+        ),
+      );
     }
     if (data.containsKey('project_id')) {
       context.handle(
@@ -2609,6 +2703,23 @@ class $TodosTable extends Todos with TableInfo<$TodosTable, Todo> {
         ),
       );
     }
+    if (data.containsKey('start_time')) {
+      context.handle(
+        _startTimeMeta,
+        startTime.isAcceptableOrUnknown(data['start_time']!, _startTimeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_startTimeMeta);
+    }
+    if (data.containsKey('estimated_hours')) {
+      context.handle(
+        _estimatedHoursMeta,
+        estimatedHours.isAcceptableOrUnknown(
+          data['estimated_hours']!,
+          _estimatedHoursMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -2626,6 +2737,10 @@ class $TodosTable extends Todos with TableInfo<$TodosTable, Todo> {
         DriftSqlType.string,
         data['${effectivePrefix}title'],
       )!,
+      description: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}description'],
+      ),
       projectId: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}project_id'],
@@ -2646,6 +2761,14 @@ class $TodosTable extends Todos with TableInfo<$TodosTable, Todo> {
         DriftSqlType.bool,
         data['${effectivePrefix}is_completed'],
       )!,
+      startTime: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}start_time'],
+      )!,
+      estimatedHours: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}estimated_hours'],
+      ),
     );
   }
 
@@ -2658,30 +2781,43 @@ class $TodosTable extends Todos with TableInfo<$TodosTable, Todo> {
 class Todo extends DataClass implements Insertable<Todo> {
   final int id;
   final String title;
+  final String? description;
   final int projectId;
   final String category;
   final DateTime deadline;
   final String priority;
   final bool isCompleted;
+  final DateTime startTime;
+  final double? estimatedHours;
   const Todo({
     required this.id,
     required this.title,
+    this.description,
     required this.projectId,
     required this.category,
     required this.deadline,
     required this.priority,
     required this.isCompleted,
+    required this.startTime,
+    this.estimatedHours,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['title'] = Variable<String>(title);
+    if (!nullToAbsent || description != null) {
+      map['description'] = Variable<String>(description);
+    }
     map['project_id'] = Variable<int>(projectId);
     map['category'] = Variable<String>(category);
     map['deadline'] = Variable<DateTime>(deadline);
     map['priority'] = Variable<String>(priority);
     map['is_completed'] = Variable<bool>(isCompleted);
+    map['start_time'] = Variable<DateTime>(startTime);
+    if (!nullToAbsent || estimatedHours != null) {
+      map['estimated_hours'] = Variable<double>(estimatedHours);
+    }
     return map;
   }
 
@@ -2689,11 +2825,18 @@ class Todo extends DataClass implements Insertable<Todo> {
     return TodosCompanion(
       id: Value(id),
       title: Value(title),
+      description: description == null && nullToAbsent
+          ? const Value.absent()
+          : Value(description),
       projectId: Value(projectId),
       category: Value(category),
       deadline: Value(deadline),
       priority: Value(priority),
       isCompleted: Value(isCompleted),
+      startTime: Value(startTime),
+      estimatedHours: estimatedHours == null && nullToAbsent
+          ? const Value.absent()
+          : Value(estimatedHours),
     );
   }
 
@@ -2705,11 +2848,14 @@ class Todo extends DataClass implements Insertable<Todo> {
     return Todo(
       id: serializer.fromJson<int>(json['id']),
       title: serializer.fromJson<String>(json['title']),
+      description: serializer.fromJson<String?>(json['description']),
       projectId: serializer.fromJson<int>(json['projectId']),
       category: serializer.fromJson<String>(json['category']),
       deadline: serializer.fromJson<DateTime>(json['deadline']),
       priority: serializer.fromJson<String>(json['priority']),
       isCompleted: serializer.fromJson<bool>(json['isCompleted']),
+      startTime: serializer.fromJson<DateTime>(json['startTime']),
+      estimatedHours: serializer.fromJson<double?>(json['estimatedHours']),
     );
   }
   @override
@@ -2718,35 +2864,49 @@ class Todo extends DataClass implements Insertable<Todo> {
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
       'title': serializer.toJson<String>(title),
+      'description': serializer.toJson<String?>(description),
       'projectId': serializer.toJson<int>(projectId),
       'category': serializer.toJson<String>(category),
       'deadline': serializer.toJson<DateTime>(deadline),
       'priority': serializer.toJson<String>(priority),
       'isCompleted': serializer.toJson<bool>(isCompleted),
+      'startTime': serializer.toJson<DateTime>(startTime),
+      'estimatedHours': serializer.toJson<double?>(estimatedHours),
     };
   }
 
   Todo copyWith({
     int? id,
     String? title,
+    Value<String?> description = const Value.absent(),
     int? projectId,
     String? category,
     DateTime? deadline,
     String? priority,
     bool? isCompleted,
+    DateTime? startTime,
+    Value<double?> estimatedHours = const Value.absent(),
   }) => Todo(
     id: id ?? this.id,
     title: title ?? this.title,
+    description: description.present ? description.value : this.description,
     projectId: projectId ?? this.projectId,
     category: category ?? this.category,
     deadline: deadline ?? this.deadline,
     priority: priority ?? this.priority,
     isCompleted: isCompleted ?? this.isCompleted,
+    startTime: startTime ?? this.startTime,
+    estimatedHours: estimatedHours.present
+        ? estimatedHours.value
+        : this.estimatedHours,
   );
   Todo copyWithCompanion(TodosCompanion data) {
     return Todo(
       id: data.id.present ? data.id.value : this.id,
       title: data.title.present ? data.title.value : this.title,
+      description: data.description.present
+          ? data.description.value
+          : this.description,
       projectId: data.projectId.present ? data.projectId.value : this.projectId,
       category: data.category.present ? data.category.value : this.category,
       deadline: data.deadline.present ? data.deadline.value : this.deadline,
@@ -2754,6 +2914,10 @@ class Todo extends DataClass implements Insertable<Todo> {
       isCompleted: data.isCompleted.present
           ? data.isCompleted.value
           : this.isCompleted,
+      startTime: data.startTime.present ? data.startTime.value : this.startTime,
+      estimatedHours: data.estimatedHours.present
+          ? data.estimatedHours.value
+          : this.estimatedHours,
     );
   }
 
@@ -2762,11 +2926,14 @@ class Todo extends DataClass implements Insertable<Todo> {
     return (StringBuffer('Todo(')
           ..write('id: $id, ')
           ..write('title: $title, ')
+          ..write('description: $description, ')
           ..write('projectId: $projectId, ')
           ..write('category: $category, ')
           ..write('deadline: $deadline, ')
           ..write('priority: $priority, ')
-          ..write('isCompleted: $isCompleted')
+          ..write('isCompleted: $isCompleted, ')
+          ..write('startTime: $startTime, ')
+          ..write('estimatedHours: $estimatedHours')
           ..write(')'))
         .toString();
   }
@@ -2775,11 +2942,14 @@ class Todo extends DataClass implements Insertable<Todo> {
   int get hashCode => Object.hash(
     id,
     title,
+    description,
     projectId,
     category,
     deadline,
     priority,
     isCompleted,
+    startTime,
+    estimatedHours,
   );
   @override
   bool operator ==(Object other) =>
@@ -2787,80 +2957,105 @@ class Todo extends DataClass implements Insertable<Todo> {
       (other is Todo &&
           other.id == this.id &&
           other.title == this.title &&
+          other.description == this.description &&
           other.projectId == this.projectId &&
           other.category == this.category &&
           other.deadline == this.deadline &&
           other.priority == this.priority &&
-          other.isCompleted == this.isCompleted);
+          other.isCompleted == this.isCompleted &&
+          other.startTime == this.startTime &&
+          other.estimatedHours == this.estimatedHours);
 }
 
 class TodosCompanion extends UpdateCompanion<Todo> {
   final Value<int> id;
   final Value<String> title;
+  final Value<String?> description;
   final Value<int> projectId;
   final Value<String> category;
   final Value<DateTime> deadline;
   final Value<String> priority;
   final Value<bool> isCompleted;
+  final Value<DateTime> startTime;
+  final Value<double?> estimatedHours;
   const TodosCompanion({
     this.id = const Value.absent(),
     this.title = const Value.absent(),
+    this.description = const Value.absent(),
     this.projectId = const Value.absent(),
     this.category = const Value.absent(),
     this.deadline = const Value.absent(),
     this.priority = const Value.absent(),
     this.isCompleted = const Value.absent(),
+    this.startTime = const Value.absent(),
+    this.estimatedHours = const Value.absent(),
   });
   TodosCompanion.insert({
     this.id = const Value.absent(),
     required String title,
+    this.description = const Value.absent(),
     required int projectId,
     required String category,
     required DateTime deadline,
     required String priority,
     this.isCompleted = const Value.absent(),
+    required DateTime startTime,
+    this.estimatedHours = const Value.absent(),
   }) : title = Value(title),
        projectId = Value(projectId),
        category = Value(category),
        deadline = Value(deadline),
-       priority = Value(priority);
+       priority = Value(priority),
+       startTime = Value(startTime);
   static Insertable<Todo> custom({
     Expression<int>? id,
     Expression<String>? title,
+    Expression<String>? description,
     Expression<int>? projectId,
     Expression<String>? category,
     Expression<DateTime>? deadline,
     Expression<String>? priority,
     Expression<bool>? isCompleted,
+    Expression<DateTime>? startTime,
+    Expression<double>? estimatedHours,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (title != null) 'title': title,
+      if (description != null) 'description': description,
       if (projectId != null) 'project_id': projectId,
       if (category != null) 'category': category,
       if (deadline != null) 'deadline': deadline,
       if (priority != null) 'priority': priority,
       if (isCompleted != null) 'is_completed': isCompleted,
+      if (startTime != null) 'start_time': startTime,
+      if (estimatedHours != null) 'estimated_hours': estimatedHours,
     });
   }
 
   TodosCompanion copyWith({
     Value<int>? id,
     Value<String>? title,
+    Value<String?>? description,
     Value<int>? projectId,
     Value<String>? category,
     Value<DateTime>? deadline,
     Value<String>? priority,
     Value<bool>? isCompleted,
+    Value<DateTime>? startTime,
+    Value<double?>? estimatedHours,
   }) {
     return TodosCompanion(
       id: id ?? this.id,
       title: title ?? this.title,
+      description: description ?? this.description,
       projectId: projectId ?? this.projectId,
       category: category ?? this.category,
       deadline: deadline ?? this.deadline,
       priority: priority ?? this.priority,
       isCompleted: isCompleted ?? this.isCompleted,
+      startTime: startTime ?? this.startTime,
+      estimatedHours: estimatedHours ?? this.estimatedHours,
     );
   }
 
@@ -2872,6 +3067,9 @@ class TodosCompanion extends UpdateCompanion<Todo> {
     }
     if (title.present) {
       map['title'] = Variable<String>(title.value);
+    }
+    if (description.present) {
+      map['description'] = Variable<String>(description.value);
     }
     if (projectId.present) {
       map['project_id'] = Variable<int>(projectId.value);
@@ -2888,6 +3086,12 @@ class TodosCompanion extends UpdateCompanion<Todo> {
     if (isCompleted.present) {
       map['is_completed'] = Variable<bool>(isCompleted.value);
     }
+    if (startTime.present) {
+      map['start_time'] = Variable<DateTime>(startTime.value);
+    }
+    if (estimatedHours.present) {
+      map['estimated_hours'] = Variable<double>(estimatedHours.value);
+    }
     return map;
   }
 
@@ -2896,11 +3100,14 @@ class TodosCompanion extends UpdateCompanion<Todo> {
     return (StringBuffer('TodosCompanion(')
           ..write('id: $id, ')
           ..write('title: $title, ')
+          ..write('description: $description, ')
           ..write('projectId: $projectId, ')
           ..write('category: $category, ')
           ..write('deadline: $deadline, ')
           ..write('priority: $priority, ')
-          ..write('isCompleted: $isCompleted')
+          ..write('isCompleted: $isCompleted, ')
+          ..write('startTime: $startTime, ')
+          ..write('estimatedHours: $estimatedHours')
           ..write(')'))
         .toString();
   }
@@ -4432,6 +4639,7 @@ typedef $$TimeEntriesTableCreateCompanionBuilder =
       required String category,
       Value<bool> isBillable,
       Value<bool> isBilled,
+      Value<bool> isLogged,
     });
 typedef $$TimeEntriesTableUpdateCompanionBuilder =
     TimeEntriesCompanion Function({
@@ -4443,6 +4651,7 @@ typedef $$TimeEntriesTableUpdateCompanionBuilder =
       Value<String> category,
       Value<bool> isBillable,
       Value<bool> isBilled,
+      Value<bool> isLogged,
     });
 
 final class $$TimeEntriesTableReferences
@@ -4510,6 +4719,11 @@ class $$TimeEntriesTableFilterComposer
 
   ColumnFilters<bool> get isBilled => $composableBuilder(
     column: $table.isBilled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isLogged => $composableBuilder(
+    column: $table.isLogged,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4581,6 +4795,11 @@ class $$TimeEntriesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get isLogged => $composableBuilder(
+    column: $table.isLogged,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$ProjectsTableOrderingComposer get projectId {
     final $$ProjectsTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -4638,6 +4857,9 @@ class $$TimeEntriesTableAnnotationComposer
 
   GeneratedColumn<bool> get isBilled =>
       $composableBuilder(column: $table.isBilled, builder: (column) => column);
+
+  GeneratedColumn<bool> get isLogged =>
+      $composableBuilder(column: $table.isLogged, builder: (column) => column);
 
   $$ProjectsTableAnnotationComposer get projectId {
     final $$ProjectsTableAnnotationComposer composer = $composerBuilder(
@@ -4699,6 +4921,7 @@ class $$TimeEntriesTableTableManager
                 Value<String> category = const Value.absent(),
                 Value<bool> isBillable = const Value.absent(),
                 Value<bool> isBilled = const Value.absent(),
+                Value<bool> isLogged = const Value.absent(),
               }) => TimeEntriesCompanion(
                 id: id,
                 projectId: projectId,
@@ -4708,6 +4931,7 @@ class $$TimeEntriesTableTableManager
                 category: category,
                 isBillable: isBillable,
                 isBilled: isBilled,
+                isLogged: isLogged,
               ),
           createCompanionCallback:
               ({
@@ -4719,6 +4943,7 @@ class $$TimeEntriesTableTableManager
                 required String category,
                 Value<bool> isBillable = const Value.absent(),
                 Value<bool> isBilled = const Value.absent(),
+                Value<bool> isLogged = const Value.absent(),
               }) => TimeEntriesCompanion.insert(
                 id: id,
                 projectId: projectId,
@@ -4728,6 +4953,7 @@ class $$TimeEntriesTableTableManager
                 category: category,
                 isBillable: isBillable,
                 isBilled: isBilled,
+                isLogged: isLogged,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -5689,21 +5915,27 @@ typedef $$TodosTableCreateCompanionBuilder =
     TodosCompanion Function({
       Value<int> id,
       required String title,
+      Value<String?> description,
       required int projectId,
       required String category,
       required DateTime deadline,
       required String priority,
       Value<bool> isCompleted,
+      required DateTime startTime,
+      Value<double?> estimatedHours,
     });
 typedef $$TodosTableUpdateCompanionBuilder =
     TodosCompanion Function({
       Value<int> id,
       Value<String> title,
+      Value<String?> description,
       Value<int> projectId,
       Value<String> category,
       Value<DateTime> deadline,
       Value<String> priority,
       Value<bool> isCompleted,
+      Value<DateTime> startTime,
+      Value<double?> estimatedHours,
     });
 
 final class $$TodosTableReferences
@@ -5746,6 +5978,11 @@ class $$TodosTableFilterComposer extends Composer<_$AppDatabase, $TodosTable> {
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<String> get category => $composableBuilder(
     column: $table.category,
     builder: (column) => ColumnFilters(column),
@@ -5763,6 +6000,16 @@ class $$TodosTableFilterComposer extends Composer<_$AppDatabase, $TodosTable> {
 
   ColumnFilters<bool> get isCompleted => $composableBuilder(
     column: $table.isCompleted,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get startTime => $composableBuilder(
+    column: $table.startTime,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get estimatedHours => $composableBuilder(
+    column: $table.estimatedHours,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5809,6 +6056,11 @@ class $$TodosTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get category => $composableBuilder(
     column: $table.category,
     builder: (column) => ColumnOrderings(column),
@@ -5826,6 +6078,16 @@ class $$TodosTableOrderingComposer
 
   ColumnOrderings<bool> get isCompleted => $composableBuilder(
     column: $table.isCompleted,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get startTime => $composableBuilder(
+    column: $table.startTime,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get estimatedHours => $composableBuilder(
+    column: $table.estimatedHours,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -5868,6 +6130,11 @@ class $$TodosTableAnnotationComposer
   GeneratedColumn<String> get title =>
       $composableBuilder(column: $table.title, builder: (column) => column);
 
+  GeneratedColumn<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get category =>
       $composableBuilder(column: $table.category, builder: (column) => column);
 
@@ -5879,6 +6146,14 @@ class $$TodosTableAnnotationComposer
 
   GeneratedColumn<bool> get isCompleted => $composableBuilder(
     column: $table.isCompleted,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get startTime =>
+      $composableBuilder(column: $table.startTime, builder: (column) => column);
+
+  GeneratedColumn<double> get estimatedHours => $composableBuilder(
+    column: $table.estimatedHours,
     builder: (column) => column,
   );
 
@@ -5936,37 +6211,49 @@ class $$TodosTableTableManager
               ({
                 Value<int> id = const Value.absent(),
                 Value<String> title = const Value.absent(),
+                Value<String?> description = const Value.absent(),
                 Value<int> projectId = const Value.absent(),
                 Value<String> category = const Value.absent(),
                 Value<DateTime> deadline = const Value.absent(),
                 Value<String> priority = const Value.absent(),
                 Value<bool> isCompleted = const Value.absent(),
+                Value<DateTime> startTime = const Value.absent(),
+                Value<double?> estimatedHours = const Value.absent(),
               }) => TodosCompanion(
                 id: id,
                 title: title,
+                description: description,
                 projectId: projectId,
                 category: category,
                 deadline: deadline,
                 priority: priority,
                 isCompleted: isCompleted,
+                startTime: startTime,
+                estimatedHours: estimatedHours,
               ),
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
                 required String title,
+                Value<String?> description = const Value.absent(),
                 required int projectId,
                 required String category,
                 required DateTime deadline,
                 required String priority,
                 Value<bool> isCompleted = const Value.absent(),
+                required DateTime startTime,
+                Value<double?> estimatedHours = const Value.absent(),
               }) => TodosCompanion.insert(
                 id: id,
                 title: title,
+                description: description,
                 projectId: projectId,
                 category: category,
                 deadline: deadline,
                 priority: priority,
                 isCompleted: isCompleted,
+                startTime: startTime,
+                estimatedHours: estimatedHours,
               ),
           withReferenceMapper: (p0) => p0
               .map(

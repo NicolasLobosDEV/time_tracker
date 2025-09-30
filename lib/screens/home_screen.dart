@@ -15,6 +15,9 @@ class HomeScreen extends StatelessWidget {
 
     // Check if another timer is already running
     final activeTimers = await (db.select(db.timeEntries)..where((t) => t.endTime.isNull())).get();
+
+    if (!context.mounted) return;
+
     if (activeTimers.isNotEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Another timer is already running. Please stop it first.')),
@@ -33,6 +36,8 @@ class HomeScreen extends StatelessWidget {
 
     await db.into(db.timeEntries).insert(newEntry);
 
+    if (!context.mounted) return;
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Timer for "${todo.title}" has started!')),
     );
@@ -42,34 +47,37 @@ class HomeScreen extends StatelessWidget {
   }
   
   // Method to clear all completed tasks
-  void _clearCompletedTasks(BuildContext context) {
+  void _clearCompletedTasks(BuildContext context) async {
     final db = Provider.of<AppDatabase>(context, listen: false);
     
-    showDialog(
+    final bool? shouldDelete = await showDialog<bool>(
       context: context,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         return AlertDialog(
           title: const Text('Clear Completed Tasks'),
           content: const Text('Are you sure you want to delete all completed tasks? This action cannot be undone.'),
           actions: <Widget>[
             TextButton(
               child: const Text('Cancel'),
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () => Navigator.of(dialogContext).pop(false),
             ),
             TextButton(
               child: Text('Delete', style: TextStyle(color: Theme.of(context).colorScheme.error)),
               onPressed: () {
                 (db.delete(db.todos)..where((t) => t.isCompleted.equals(true))).go();
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Completed tasks have been cleared.')),
-                );
+                Navigator.of(dialogContext).pop(true);
               },
             ),
           ],
         );
       },
     );
+
+    if (shouldDelete == true && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Completed tasks have been cleared.')),
+      );
+    }
   }
 
   @override

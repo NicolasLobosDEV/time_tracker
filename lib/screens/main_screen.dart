@@ -7,6 +7,7 @@ import 'package:time_tracker/screens/expenses/expenses_screen.dart';
 import 'package:time_tracker/screens/home_screen.dart';
 import 'package:time_tracker/screens/invoices/invoices_screen.dart';
 import 'package:time_tracker/screens/projects/projects_screen.dart';
+import 'package:time_tracker/screens/reports/reports_screen.dart';
 import 'package:time_tracker/screens/settings/settings_screen.dart';
 import 'package:time_tracker/screens/time_tracker/time_tracker_screen.dart';
 
@@ -21,16 +22,15 @@ class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
 
   // This list now correctly references the imported screen classes.
-  // The 'const' keyword was removed from the list initialization below.
   final List<Widget> _screens = <Widget>[
-    HomeScreen(),
-    TimeTrackerScreen(),
-    ProjectsScreen(),
-    ClientsScreen(),
-    ExpensesScreen(),
-    InvoicesScreen(),
-    ReportsScreen(),
-    SettingsScreen(),
+    const HomeScreen(),
+    const TimeTrackerScreen(),
+    const ProjectsScreen(),
+    const ClientsScreen(),
+    const ExpensesScreen(),
+    const InvoicesScreen(),
+    const ReportsScreen(),
+    const SettingsScreen(),
   ];
 
   final List<String> _titles = const <String>[
@@ -81,15 +81,15 @@ class _MainScreenState extends State<MainScreen> {
             icon: Icon(Icons.receipt),
             label: 'Expenses',
           ),
-            BottomNavigationBarItem(
+          BottomNavigationBarItem(
             icon: Icon(Icons.request_quote),
             label: 'Invoices',
           ),
-            BottomNavigationBarItem(
+          BottomNavigationBarItem(
             icon: Icon(Icons.bar_chart),
             label: 'Reports',
           ),
-            BottomNavigationBarItem(
+          BottomNavigationBarItem(
             icon: Icon(Icons.settings),
             label: 'Settings',
           ),

@@ -69,7 +69,6 @@ class _AddEntryDialogState extends State<AddEntryDialog> {
     if (time != null) setState(() => isStart ? _manualStartTime = time : _manualEndTime = time);
   }
 
-  // FIX 1: Make the save function async and more robust
   Future<void> _saveEntry() async {
     if (!_formKey.currentState!.validate()) return;
     final db = Provider.of<AppDatabase>(context, listen: false);
@@ -78,7 +77,7 @@ class _AddEntryDialogState extends State<AddEntryDialog> {
       final newEntry = TimeEntriesCompanion(
         description: drift.Value(_descriptionController.text),
         projectId: drift.Value(_selectedProjectId!),
-        category: drift.Value(_selectedCategory),
+        category: drift.Value(_selectedCategory!),
         isBillable: drift.Value(_isBillable),
         startTime: drift.Value(DateTime.now()),
       );
@@ -94,7 +93,7 @@ class _AddEntryDialogState extends State<AddEntryDialog> {
       final newEntry = TimeEntriesCompanion(
         description: drift.Value(_descriptionController.text),
         projectId: drift.Value(_selectedProjectId!),
-        category: drift.Value(_selectedCategory),
+        category: drift.Value(_selectedCategory!),
         isBillable: drift.Value(_isBillable),
         startTime: drift.Value(startTime),
         endTime: drift.Value(endTime),
@@ -102,7 +101,6 @@ class _AddEntryDialogState extends State<AddEntryDialog> {
       await db.into(db.timeEntries).insert(newEntry);
     }
     
-    // Check if the widget is still mounted before popping the navigator
     if (mounted) {
       Navigator.of(context).pop();
     }
@@ -113,7 +111,6 @@ class _AddEntryDialogState extends State<AddEntryDialog> {
     final db = Provider.of<AppDatabase>(context, listen: false);
     return AlertDialog(
       title: const Text('Add Time Entry'),
-      // FIX 2: Wrap the content in a SizedBox to control width
       content: SizedBox(
         width: 500, // Set a comfortable width for the dialog
         child: _isLoading
@@ -135,7 +132,6 @@ class _AddEntryDialogState extends State<AddEntryDialog> {
                         initialValue: _selectedProjectId,
                         decoration: const InputDecoration(labelText: 'Project'),
                         hint: const Text('Select a project'),
-                        // FIX 3: Corrected the builder to use the 'db' variable already in scope
                         items: _projectsWithClients.map((result) {
                           final project = result.readTable(db.projects);
                           final client = result.readTable(db.clients);

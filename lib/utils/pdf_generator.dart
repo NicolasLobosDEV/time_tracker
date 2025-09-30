@@ -23,7 +23,6 @@ Future<void> generateAndShowInvoice({
       pageFormat: PdfPageFormat.a4,
       margin: const pw.EdgeInsets.all(32),
       build: (context) => [
-        // This is the key change: the header is now conditional
         if (settings.showLetterhead)
           _buildHeader(context, settings, font, boldFont),
 
@@ -65,7 +64,7 @@ pw.Widget _buildHeader(pw.Context context, CompanySetting settings, pw.Font font
         ],
       ),
       if (logo != null)
-        pw.Container(
+        pw.SizedBox(
           width: 100,
           height: 100,
           child: pw.Image(logo),
@@ -84,8 +83,8 @@ pw.Widget _buildInvoiceDetails(pw.Context context, Invoice invoice, Client clien
         children: [
           pw.Text('Billed to:', style: pw.TextStyle(font: boldFont)),
           pw.Text(client.name, style: pw.TextStyle(font: font)),
-          pw.Text(client.address, style: pw.TextStyle(font: font)),
-          pw.Text(client.email, style: pw.TextStyle(font: font)),
+          pw.Text(client.address ?? '', style: pw.TextStyle(font: font)),
+          pw.Text(client.email ?? '', style: pw.TextStyle(font: font)),
         ],
       ),
       pw.Column(
@@ -111,7 +110,7 @@ pw.Widget _buildLineItemsTable(pw.Context context, List<LineItem> items, pw.Font
     ];
   }).toList();
 
-  return pw.Table.fromTextArray(
+  return pw.TableHelper.fromTextArray(
     headers: headers,
     data: data,
     border: null,

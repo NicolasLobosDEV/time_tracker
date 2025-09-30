@@ -21,7 +21,7 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
   late bool _isBillable;
   late DateTime _startTime;
   late DateTime _endTime;
-  late bool _isBilled; // <-- 1. ADD STATE VARIABLE FOR BILLED STATUS
+  late bool _isLogged; // <-- State for the new 'logged' status
 
   final List<String> _categories = [
     'Client Communication','Client Meetings','Client Operations','Freelancer Support',
@@ -34,29 +34,33 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
     final entry = widget.entry;
     _descriptionController = TextEditingController(text: entry.description);
     _selectedProjectId = entry.projectId;
-    _selectedCategory = entry.category ?? _categories.first;
+    _selectedCategory = entry.category;
     _isBillable = entry.isBillable;
     _startTime = entry.startTime;
     _endTime = entry.endTime!;
-    _isBilled = entry.isBilled; // <-- 2. INITIALIZE THE BILLED STATUS
+    _isLogged = entry.isLogged; // Initialize 'logged' status
   }
 
-  Future<void> _selectDateTime(BuildContext context, {required bool isStart}) async {
+  Future<void> _selectDateTime({required bool isStart}) async {
     final initialDate = isStart ? _startTime : _endTime;
     final date = await showDatePicker(context: context, initialDate: initialDate, firstDate: DateTime(2000), lastDate: DateTime(2100));
     if (date == null) return;
 
+    if (!mounted) return;
+
     final time = await showTimePicker(context: context, initialTime: TimeOfDay.fromDateTime(initialDate));
     if (time == null) return;
 
-    setState(() {
-      final newDateTime = DateTime(date.year, date.month, date.day, time.hour, time.minute);
-      if (isStart) {
-        _startTime = newDateTime;
-      } else {
-        _endTime = newDateTime;
-      }
-    });
+    if (mounted) {
+      setState(() {
+        final newDateTime = DateTime(date.year, date.month, date.day, time.hour, time.minute);
+        if (isStart) {
+          _startTime = newDateTime;
+        } else {
+          _endTime = newDateTime;
+        }
+      });
+    }
   }
 
   void _saveEntry() {
@@ -74,7 +78,8 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
         isBillable: drift.Value(_isBillable),
         startTime: drift.Value(_startTime),
         endTime: drift.Value(_endTime),
-        isBilled: drift.Value(_isBilled), // <-- 3. SAVE THE BILLED STATUS
+        isLogged: drift.Value(_isLogged), // Save the 'logged' status
+        // 'isBilled' is not edited here, only when creating an invoice
       );
       db.update(db.timeEntries).replace(updatedEntry);
       Navigator.of(context).pop();
@@ -120,13 +125,13 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
               title: const Text('Start Time'),
               subtitle: Text(DateFormat.yMd().add_jm().format(_startTime)),
               trailing: const Icon(Icons.calendar_today),
-              onTap: () => _selectDateTime(context, isStart: true),
+              onTap: () => _selectDateTime(isStart: true),
             ),
             ListTile(
               title: const Text('End Time'),
               subtitle: Text(DateFormat.yMd().add_jm().format(_endTime)),
               trailing: const Icon(Icons.calendar_today),
-              onTap: () => _selectDateTime(context, isStart: false),
+              onTap: () => _selectDateTime(isStart: false),
             ),
             const Divider(),
             SwitchListTile(
@@ -135,12 +140,21 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
               value: _isBillable,
               onChanged: (v) => setState(() => _isBillable = v),
             ),
-            // <-- 4. ADD THE NEW "BILLED" TOGGLE
+            // New Switch for 'Logged' status
             SwitchListTile(
-              title: const Text('Billed'),
-              subtitle: const Text('Has this entry been logged?'),
-              value: _isBilled,
-              onChanged: (v) => setState(() => _isBilled = v),
+              title: const Text('Logged'),
+              subtitle: const Text('Has this been logged in an external platform?'),
+              value: _isLogged,
+              onChanged: (v) => setState(() => _isLogged = v),
+            ),
+            // Read-only indicator for 'Billed' status
+            ListTile(
+              title: const Text('Billed Status'),
+              subtitle: const Text('Is this included in an invoice?'),
+              trailing: Chip(
+                label: Text(widget.entry.isBilled ? 'Yes' : 'No'),
+                backgroundColor: widget.entry.isBilled ? Colors.green : Colors.red,
+              ),
             ),
           ],
         ),
@@ -148,3 +162,4 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
     );
   }
 }
+
