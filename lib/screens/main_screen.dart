@@ -7,7 +7,6 @@ import 'package:time_tracker/screens/expenses/expenses_screen.dart';
 import 'package:time_tracker/screens/home_screen.dart';
 import 'package:time_tracker/screens/invoices/invoices_screen.dart';
 import 'package:time_tracker/screens/projects/projects_screen.dart';
-import 'package:time_tracker/screens/reports/reports_screen.dart';
 import 'package:time_tracker/screens/settings/settings_screen.dart';
 import 'package:time_tracker/screens/time_tracker/time_tracker_screen.dart';
 

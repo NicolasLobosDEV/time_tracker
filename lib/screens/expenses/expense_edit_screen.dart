@@ -155,7 +155,7 @@ class _ExpenseEditScreenState extends State<ExpenseEditScreen> {
           ),
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
-            value: _selectedCategory,
+            initialValue: _selectedCategory,
             decoration: const InputDecoration(labelText: 'Category'),
             items: _categories
                 .map((c) => DropdownMenuItem(value: c, child: Text(c)))
@@ -205,7 +205,7 @@ class _ExpenseEditScreenState extends State<ExpenseEditScreen> {
           ),
           const SizedBox(height: 16),
           DropdownButtonFormField<int>(
-            value: _selectedProjectId,
+            initialValue: _selectedProjectId,
             decoration: const InputDecoration(
               labelText: 'Associate with Project (optional)',
             ),
@@ -221,7 +221,7 @@ class _ExpenseEditScreenState extends State<ExpenseEditScreen> {
           const Center(child: Text('OR')),
           const SizedBox(height: 8),
           DropdownButtonFormField<int>(
-            value: _selectedClientId,
+            initialValue: _selectedClientId,
             decoration: const InputDecoration(
               labelText: 'Associate with Client (optional)',
             ),

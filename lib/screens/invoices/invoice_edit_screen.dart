@@ -399,10 +399,11 @@ class _InvoiceEditScreenState extends State<InvoiceEditScreen> {
             FutureBuilder<List<Client>>(
               future: db.select(db.clients).get(),
               builder: (context, snapshot) {
-                if (!snapshot.hasData)
+                if (!snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator());
+                }
                 return DropdownButtonFormField<Client>(
-                  value: _selectedClient,
+                  initialValue: _selectedClient,
                   decoration: const InputDecoration(labelText: 'Client'),
                   items: snapshot.data!
                       .map(
