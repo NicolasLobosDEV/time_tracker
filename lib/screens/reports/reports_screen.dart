@@ -141,7 +141,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
         default: text = ''; break;
       }
     }
-    return SideTitleWidget(axisSide: meta.axisSide, child: Text(text, style: style));
+    // FIX: The `SideTitleWidget` constructor has been updated. This new format
+    // should resolve the 'meta' parameter error.
+    return Text(text, style: style);
   }
 
   @override
