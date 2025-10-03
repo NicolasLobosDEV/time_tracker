@@ -153,6 +153,6 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 ## 📬 Contact
 
-Nicolas Lobos - [nicolas.lobos.dev@gmail.com](mailto:nicolas.lobos.dev@gmail.com)
+Nicolas Lobos - [nicolasrlobos@gmail.com](mailto:nicolasrlobos@gmail.com)
 
 Project Link: [https://github.com/NicolasLobosDEV/time\_tracker](https://github.com/NicolasLobosDEV/time_tracker)
