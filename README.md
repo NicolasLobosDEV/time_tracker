@@ -158,3 +158,6 @@ Nicolas Lobos - [nicolasrlobos@gmail.com](mailto:nicolasrlobos@gmail.com)
 Buy me a Coffee (if you would like to!)☕: [buymeacoffee.com/nicolasrlobos](buymeacoffee.com/nicolasrlobos)
 
 Project Link: [https://github.com/NicolasLobosDEV/time\_tracker](https://github.com/NicolasLobosDEV/time_tracker)
+
+
+sun edit 21
